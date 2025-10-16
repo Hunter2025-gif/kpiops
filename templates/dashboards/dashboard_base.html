@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kampala Pharmaceutical Industries - Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        .dashboard-body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .dashboard-container {
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .batch-number {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+    
+        /* Fix dropdown cursor */
+        .dropdown-toggle {
+            cursor: pointer !important;
+        }
+        .nav-link[data-bs-toggle="dropdown"] {
+            cursor: pointer !important;
+        }
+        
+        /* Enhanced dropdown styling */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem !important;
+        }
+        
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: #0056b3;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Fix dropdown positioning in admin dashboard */
+        .navbar-nav.position-absolute {
+            z-index: 1050;
+        }
+        
+        /* Toast notification styling */
+        .toast-container {
+            max-width: 350px;
+        }
+        
+        .toast-message {
+            width: 350px;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 1;
+            border: none;
+            border-radius: 6px;
+            overflow: hidden;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .toast-message .toast-header {
+            padding: 0.5rem 1rem;
+            border-bottom: none;
+        }
+        
+        .toast-message .toast-body {
+            padding: 0.75rem 1rem;
+            background-color: white;
+        }
+        
+        /* Colors for different message types */
+        .bg-success {
+            background-color: #28a745 !important;
+        }
+        
+        .bg-info {
+            background-color: #17a2b8 !important;
+        }
+        
+        .bg-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+        }
+        
+        .bg-error,
+        .bg-danger {
+            background-color: #dc3545 !important;
+        }
+        </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dashboard-body">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #0056b3;">
+        <div class="container-fluid position-relative">
+            <div class="w-100 d-flex justify-content-center">
+                <a class="navbar-brand mx-auto" href="{% url 'home' %}" style="color: white !important;">
+                    {% load static %}
+                    <img src="{% static 'Main Logo.png' %}" alt="KPI Logo" height="30" class="me-2" onerror="this.style.display='none'">
+                    Kampala Pharmaceutical Industries(KPI)
+                </a>
+            </div>
+            
+            {% if user.is_authenticated %}
+            <div class="navbar-nav position-absolute" style="right: 15px; top: 50%; transform: translateY(-50%);">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                        <i class="fas fa-user me-1"></i>
+                        {{ user.get_full_name|default:user.username }}
+                        <span class="badge bg-secondary ms-1">{{ user.get_role_display }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" style="min-width: 220px;">
+                        <li><a class="dropdown-item" href="{% url 'home' %}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                        {% if user.is_staff %}
+                        <li><a class="dropdown-item" href="{% url 'dashboards:admin_dashboard' %}"><i class="fas fa-chart-line me-2"></i>Admin Dashboard</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i>Admin Panel</a></li>
+                        {% endif %}
+                        {% if user.is_staff or user.is_superuser or user.role == 'admin' %}
+                        <li><a class="dropdown-item" href="{% url 'reports:comments_report' %}"><i class="fas fa-comments me-2"></i>All Comments Report</a></li>
+                        {% else %}
+                        <li><a class="dropdown-item" href="{% url 'reports:comments_report' %}"><i class="fas fa-comments me-2"></i>My Comments Report</a></li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+            {% else %}
+            <div class="navbar-nav position-absolute" style="right: 15px; top: 50%; transform: translateY(-50%);">
+                <a class="nav-link text-white" href="{% url 'accounts:login' %}">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Toast notifications container -->
+    {% if messages %}
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+        {% for message in messages %}
+        <div class="toast toast-message show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-{{ message.tags }} text-white">
+                <strong class="me-auto">
+                    {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle me-1"></i> Success
+                    {% elif message.tags == 'info' %}
+                    <i class="fas fa-info-circle me-1"></i> Information
+                    {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-circle me-1"></i> Warning
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-triangle me-1"></i> Error
+                    {% else %}
+                    <i class="fas fa-bell me-1"></i> Notification
+                    {% endif %}
+                </strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    {% block content %}
+    {% endblock %}
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-dismiss toast notifications -->
+    <script>
+        $(document).ready(function() {
+            // Stagger the auto-dismiss timing for multiple toasts
+            $('.toast-message').each(function(index) {
+                var $toast = $(this);
+                // Base delay + staggered offset for each toast
+                var delay = 5000 + (index * 500); 
+                
+                setTimeout(function() {
+                    $toast.animate({opacity: 0, marginRight: '-100%'}, 500, function() {
+                        $(this).remove();
+                    });
+                }, delay);
+            });
+            
+            // Manual close button handling
+            $('.btn-close').on('click', function() {
+                $(this).closest('.toast-message').animate({opacity: 0, marginRight: '-100%'}, 300, function() {
+                    $(this).remove();
+                });
+            });
+        });
+    </script>
+    
+    <!-- Auto-dismiss alerts after 4 seconds -->
+    <script>
+        $(document).ready(function() {
+            // Auto-dismiss all alert messages after 4 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut('slow', function() {
+                    $(this).remove();
+                });
+            }, 4000); // 4 seconds
+            
+            // Also allow manual close with the button
+            $('.btn-close').on('click', function() {
+                $(this).closest('.alert').fadeOut('slow', function() {
+                    $(this).remove();
+                });
+            });
+        });
+    </script>
+    
+    <!-- BOOTSTRAP DROPDOWN INITIALIZATION -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Initializing Bootstrap dropdowns...');
+        
+        // Initialize all Bootstrap dropdowns
+        const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+        const dropdownList = [...dropdownElementList].map(dropdownToggleEl => {
+            return new bootstrap.Dropdown(dropdownToggleEl);
+        });
+        
+        console.log('Bootstrap dropdowns initialized:', dropdownList.length);
+        
+        // Add click listener for debugging
+        const userDropdown = document.getElementById('userDropdown');
+        if (userDropdown) {
+            userDropdown.addEventListener('click', function() {
+                console.log('Admin dropdown clicked');
+            });
+        }
+    });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

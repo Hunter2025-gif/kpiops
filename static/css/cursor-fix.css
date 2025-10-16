@@ -1,0 +1,48 @@
+/* 
+ * Global cursor fix for KPI system
+ * Created: October 10, 2025
+ * 
+ * This CSS file fixes the issue of blinking text cursors appearing 
+ * in static text elements throughout the system
+ */
+
+/* Fix for text cursor issue across the system */
+body, p, h1, h2, h3, h4, h5, h6, div, span, a, li, td, th, label, i,
+.text-muted, .card-title, .card-text, .text-center, .text-primary, .text-success, 
+.text-warning, .text-danger, .text-info, .text-white, .text-black {
+    cursor: default !important;
+    caret-color: transparent !important;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Preserve text cursor only for interactive elements */
+input, textarea, [contenteditable="true"], a:hover, button:hover, 
+.form-control, .btn, .dropdown-item, .nav-link, [role="button"] {
+    cursor: pointer !important;
+}
+
+/* Input fields should keep text cursor */
+input, textarea, .form-control, [contenteditable="true"] {
+    cursor: text !important;
+    caret-color: auto !important;
+}
+
+/* Explicitly remove cursor from elements with this class */
+.no-cursor {
+    cursor: default !important;
+    caret-color: transparent !important;
+}
+
+/* Fix for text selection behavior */
+p.text-muted, h5.text-muted, div.text-center {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Hide blinking cursor */
+*:not(input):not(textarea):not([contenteditable="true"]) {
+    caret-color: transparent !important;
+}

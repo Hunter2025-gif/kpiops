@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard Fix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .content-section {
+            display: none;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        .sidebar {
+            background-color: #0056b3;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 8px 0;
+        }
+        
+        .sidebar a:hover, .sidebar a.active {
+            background-color: rgba(255,255,255,0.2);
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 sidebar">
+                <h3 class="mb-4">Admin Dashboard</h3>
+                <h5>Menu</h5>
+                <a href="#" class="section-link active" data-section="section1">Section 1</a>
+                <a href="#" class="section-link" data-section="section2">Section 2</a>
+                <a href="#" class="section-link" data-section="section3">Section 3</a>
+                <a href="#" class="section-link" data-section="section4">Section 4</a>
+                <a href="#" class="section-link" data-section="section5">Section 5</a>
+            </div>
+            
+            <div class="col-md-9">
+                <div id="section1" class="content-section active">
+                    <h2>Section 1 Content</h2>
+                    <p>This is section 1 content.</p>
+                </div>
+                
+                <div id="section2" class="content-section">
+                    <h2>Section 2 Content</h2>
+                    <p>This is section 2 content.</p>
+                </div>
+                
+                <div id="section3" class="content-section">
+                    <h2>Section 3 Content</h2>
+                    <p>This is section 3 content.</p>
+                </div>
+                
+                <div id="section4" class="content-section">
+                    <h2>Section 4 Content</h2>
+                    <p>This is section 4 content.</p>
+                </div>
+                
+                <div id="section5" class="content-section">
+                    <h2>Section 5 Content</h2>
+                    <p>This is section 5 content.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up section navigation');
+            
+            // Get all section links and attach click handlers
+            const sectionLinks = document.querySelectorAll('.section-link');
+            sectionLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section');
+                    console.log('Clicked section:', sectionId);
+                    showSection(sectionId, this);
+                });
+            });
+            
+            // Set first section as active by default
+            showSection('section1', document.querySelector('.section-link[data-section="section1"]'));
+        });
+        
+        // Function to show a specific section and hide others
+        function showSection(sectionId, clickedLink) {
+            console.log('Showing section:', sectionId);
+            
+            // Get all sections and links
+            const allSections = document.querySelectorAll('.content-section');
+            const allLinks = document.querySelectorAll('.section-link');
+            const targetSection = document.getElementById(sectionId);
+            
+            if (!targetSection) {
+                console.error('Section not found:', sectionId);
+                return;
+            }
+            
+            // Hide all sections and remove active class from links
+            allSections.forEach(section => {
+                section.style.display = 'none';
+                section.classList.remove('active');
+            });
+            
+            allLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show target section and make clicked link active
+            targetSection.style.display = 'block';
+            targetSection.classList.add('active');
+            
+            if (clickedLink) {
+                clickedLink.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

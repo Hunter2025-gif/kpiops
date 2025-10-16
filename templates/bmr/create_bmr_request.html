@@ -1,0 +1,110 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Request New BMR{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Request New BMR</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:production_manager_dashboard' %}">Production Manager Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'bmr:bmr_request_list' %}">BMR Requests</a></li>
+        <li class="breadcrumb-item active">Request New BMR</li>
+    </ol>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-file-medical me-1"></i>
+            Production Manager BMR Request Form
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Production Manager BMR Request:</strong> Submit a request to the QA Department for BMR creation. Only Product and Required Date are mandatory. Priority and Reason are optional but can help QA understand your requirements better.
+            </div>
+            
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.product.id_for_label }}" class="form-label">Product <span class="text-danger">*</span></label>
+                            {{ form.product }}
+                            {% if form.product.errors %}
+                                <div class="invalid-feedback d-block">{{ form.product.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Select the product for which you need a BMR</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.required_date.id_for_label }}" class="form-label">Required Date <span class="text-danger">*</span></label>
+                            {{ form.required_date }}
+                            {% if form.required_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.required_date.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">When do you need this BMR?</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">Priority</label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <div class="invalid-feedback d-block">{{ form.priority.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">How urgent is this request? (optional)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">Reason for BMR Request</label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                                <div class="invalid-feedback d-block">{{ form.reason.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">Any additional information about why this BMR is needed (optional)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'bmr:bmr_request_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Submit Request to QA
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Activate form validation
+        (function() {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+    });
+</script>
+{% endblock %}

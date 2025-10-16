@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FGS Inventory List - Kampala Pharma{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-primary">
+                        <i class="fas fa-boxes me-2"></i>FGS Inventory List
+                    </h1>
+                    <p class="text-muted mb-0">Complete inventory of finished goods</p>
+                </div>
+                <div>
+                    <a href="{% url 'dashboards:finished_goods_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>All Inventory Items
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Batch Number</th>
+                                    <th>Product</th>
+                                    <th>Quantity Available</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in inventory_items %}
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">{{ item.batch_number }}</strong>
+                                    </td>
+                                    <td>{{ item.product.product_name }}</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ item.quantity_available|floatformat:0 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if item.status == 'available' %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% elif item.status == 'released' %}
+                                            <span class="badge bg-warning">Released</span>
+                                        {% elif item.status == 'quarantine' %}
+                                            <span class="badge bg-danger">Quarantine</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ item.status|capfirst }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if item.status == 'available' %}
+                                            <a href="{% url 'fgs_management:quick_release' item.id %}" 
+                                               class="btn btn-sm btn-success">
+                                                <i class="fas fa-truck me-1"></i>Release
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
+                                        No inventory items found
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

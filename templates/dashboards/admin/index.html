@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Redirect</title>
+    <script>
+        // Redirect to the correct admin dashboard URL
+        window.location.href = '/dashboard/admin-overview/';
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        .redirect-message {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        a {
+            display: inline-block;
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        a:hover {
+            background-color: #003d7f;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-message">
+        <h1>Redirecting to Admin Dashboard</h1>
+        <p>The URL has changed. You are being redirected to the correct admin dashboard URL.</p>
+        <p>If you are not redirected automatically, click the button below:</p>
+        <a href="/dashboard/admin-overview/">Go to Admin Dashboard</a>
+    </div>
+</body>
+</html>
+    

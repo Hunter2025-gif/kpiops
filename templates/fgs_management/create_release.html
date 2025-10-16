@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Release Certificate{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Create Release Certificate for Batch {{ inventory.batch_number }}</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Inventory Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Product:</strong> {{ inventory.product.product_name }}</p>
+                    <p><strong>Batch Number:</strong> {{ inventory.batch_number }}</p>
+                    <p><strong>Quantity Available:</strong> {{ inventory.quantity_available }} {{ inventory.unit_of_measure }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Manufacturing Date:</strong> {{ inventory.created_at|date:"d M Y" }}</p>
+                    <p><strong>Status:</strong> {{ inventory.status|title }}</p>
+                    <p><strong>Location:</strong> {{ inventory.storage_location|default:"Not specified" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Release Certificate Details</h5>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label for="release_type" class="form-label">Release Type</label>
+                <select name="release_type" id="release_type" class="form-select" required>
+                    <option value="" selected disabled>Select release type</option>
+                    {% for value, label in release_type_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="release_reference" class="form-label">Release Reference Number</label>
+                <input type="text" name="release_reference" id="release_reference" class="form-control" required>
+                <small class="form-text text-muted">Invoice, DO number, or internal reference</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="release_certificate_number" class="form-label">Release Certificate Number</label>
+                <input type="text" name="release_certificate_number" id="release_certificate_number" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="quantity_released" class="form-label">Quantity to Release</label>
+                <input type="number" name="quantity_released" id="quantity_released" class="form-control" 
+                    min="0" max="{{ inventory.quantity_available }}" step="0.01" required>
+                <small class="form-text text-muted">Maximum available: {{ inventory.quantity_available }} {{ inventory.unit_of_measure }}</small>
+            </div>
+
+            <div class="mb-3">
+                <label for="release_date" class="form-label">Release Date</label>
+                <input type="date" name="release_date" id="release_date" class="form-control" required>
+            </div>
+
+            <div id="customerSection" style="display: none;">
+                <h5 class="mt-4 mb-3">Customer Information</h5>
+                
+                <div class="mb-3">
+                    <label for="customer_name" class="form-label">Customer Name</label>
+                    <input type="text" name="customer_name" id="customer_name" class="form-control">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="customer_contact" class="form-label">Customer Contact</label>
+                    <input type="text" name="customer_contact" id="customer_contact" class="form-control">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="delivery_address" class="form-label">Delivery Address</label>
+                    <textarea name="delivery_address" id="delivery_address" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="unit_price" class="form-label">Unit Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">UGX</span>
+                        <input type="number" name="unit_price" id="unit_price" class="form-control" min="0" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea name="notes" id="notes" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Create Release Certificate</button>
+            <a href="{% url 'fgs_management:inventory_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const releaseTypeSelect = document.getElementById('release_type');
+        const customerSection = document.getElementById('customerSection');
+        
+        releaseTypeSelect.addEventListener('change', function() {
+            // Show customer section only for sales releases
+            if (this.value === 'sales') {
+                customerSection.style.display = 'block';
+                document.getElementById('customer_name').required = true;
+            } else {
+                customerSection.style.display = 'none';
+                document.getElementById('customer_name').required = false;
+            }
+        });
+        
+        // Set today's date as default for release date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('release_date').value = today;
+    });
+</script>
+{% endblock %}

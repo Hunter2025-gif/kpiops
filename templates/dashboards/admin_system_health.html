@@ -1,0 +1,207 @@
+{% extends "dashboards/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Admin System Health{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{{ page_title }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:admin_dashboard' %}">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active">System Health</li>
+    </ol>
+
+    <!-- System Info Overview -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-server me-1"></i>
+                    System Information
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Python Version</th>
+                                <td>{{ system_info.python_version }}</td>
+                            </tr>
+                            <tr>
+                                <th>Django Version</th>
+                                <td>{{ system_info.django_version }}</td>
+                            </tr>
+                            <tr>
+                                <th>Database</th>
+                                <td>{{ system_info.database }}</td>
+                            </tr>
+                            <tr>
+                                <th>Operating System</th>
+                                <td>{{ system_info.os }}</td>
+                            </tr>
+                            <tr>
+                                <th>CPU Count</th>
+                                <td>{{ system_info.cpu_count }}</td>
+                            </tr>
+                            <tr>
+                                <th>Current Time</th>
+                                <td>{% now "F j, Y, g:i a" %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-database me-1"></i>
+                    Database Statistics
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ db_stats.bmr_count }}</h2>
+                                    <p class="text-center mb-0">Total BMRs</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ db_stats.users_count }}</h2>
+                                    <p class="text-center mb-0">Users</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-warning text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ db_stats.phases_count }}</h2>
+                                    <p class="text-center mb-0">Phase Executions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-info text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ db_stats.products_count }}</h2>
+                                    <p class="text-center mb-0">Products</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Checks -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-heartbeat me-1"></i>
+            System Health Checks
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card bg-success text-white mb-3">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="fas fa-database fa-2x"></i>
+                                    <span class="ms-2">Database Connection</span>
+                                </div>
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white mb-3">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="fas fa-server fa-2x"></i>
+                                    <span class="ms-2">Server Status</span>
+                                </div>
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white mb-3">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="fas fa-hdd fa-2x"></i>
+                                    <span class="ms-2">Disk Space</span>
+                                </div>
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent System Logs -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-clipboard-list me-1"></i>
+            Recent System Activity Logs
+        </div>
+        <div class="card-body">
+            <table id="logsTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Content Type</th>
+                        <th>Object</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td>{{ log.action_time|date:"M d, Y H:i:s" }}</td>
+                        <td>{{ log.user.username }}</td>
+                        <td>
+                            {% if log.action_flag == 1 %}
+                            <span class="badge bg-success">Addition</span>
+                            {% elif log.action_flag == 2 %}
+                            <span class="badge bg-warning">Change</span>
+                            {% elif log.action_flag == 3 %}
+                            <span class="badge bg-danger">Deletion</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.content_type }}</td>
+                        <td>{{ log.object_repr }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No logs found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#logsTable').DataTable();
+    });
+</script>
+{% endblock %}

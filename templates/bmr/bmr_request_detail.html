@@ -1,0 +1,164 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}BMR Request Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">BMR Request Details</h1>
+    <ol class="breadcrumb mb-4">
+        {% if request.user.role == 'qa' %}
+            <li class="breadcrumb-item"><a href="{% url 'dashboards:qa_dashboard' %}">QA Dashboard</a></li>
+        {% else %}
+            <li class="breadcrumb-item"><a href="{% url 'dashboards:store_dashboard' %}">Store Dashboard</a></li>
+        {% endif %}
+        <li class="breadcrumb-item"><a href="{% url 'bmr:bmr_request_list' %}">BMR Requests</a></li>
+        <li class="breadcrumb-item active">Request Details</li>
+    </ol>
+    
+    <!-- Status Badge -->
+    <div class="mb-4">
+        {% if bmr_request.status == 'pending' %}
+            <span class="badge bg-secondary fs-6 px-3 py-2">Status: Pending</span>
+        {% elif bmr_request.status == 'approved' %}
+            <span class="badge bg-success fs-6 px-3 py-2">Status: Approved</span>
+        {% elif bmr_request.status == 'rejected' %}
+            <span class="badge bg-danger fs-6 px-3 py-2">Status: Rejected</span>
+        {% elif bmr_request.status == 'completed' %}
+            <span class="badge bg-primary fs-6 px-3 py-2">Status: Completed</span>
+        {% endif %}
+        
+        {% if bmr_request.priority == 'low' %}
+            <span class="badge bg-info fs-6 px-3 py-2 ms-2">Priority: Low</span>
+        {% elif bmr_request.priority == 'medium' %}
+            <span class="badge bg-primary fs-6 px-3 py-2 ms-2">Priority: Medium</span>
+        {% elif bmr_request.priority == 'high' %}
+            <span class="badge bg-warning fs-6 px-3 py-2 ms-2">Priority: High</span>
+        {% elif bmr_request.priority == 'urgent' %}
+            <span class="badge bg-danger fs-6 px-3 py-2 ms-2">Priority: Urgent</span>
+        {% endif %}
+    </div>
+    
+    <!-- Request Details Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-info-circle me-1"></i>
+            Request Information
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th width="40%">Request ID:</th>
+                            <td>{{ bmr_request.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Product:</th>
+                            <td>{{ bmr_request.product.product_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Requested By:</th>
+                            <td>{{ bmr_request.requested_by.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Request Date:</th>
+                            <td>{{ bmr_request.request_date|date:"F d, Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Required Date:</th>
+                            <td>{{ bmr_request.required_date|date:"F d, Y" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table">
+                        <tr>
+                            <th width="40%">Quantity Required:</th>
+                            <td>{{ bmr_request.quantity_required }} {{ bmr_request.quantity_unit }}</td>
+                        </tr>
+                        {% if bmr_request.status != 'pending' %}
+                        <tr>
+                            <th>Processed By:</th>
+                            <td>{{ bmr_request.approved_by.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Processed Date:</th>
+                            <td>{{ bmr_request.approved_date|date:"F d, Y H:i" }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if bmr_request.bmr %}
+                        <tr>
+                            <th>Associated BMR:</th>
+                            <td>
+                                <a href="{% url 'bmr:detail' bmr_request.bmr.id %}" class="btn btn-sm btn-primary">
+                                    {{ bmr_request.bmr.batch_number }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Reason and Notes -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <i class="fas fa-comment-dots me-1"></i> Reason for Request
+                        </div>
+                        <div class="card-body">
+                            <p>{{ bmr_request.reason|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <i class="fas fa-sticky-note me-1"></i> Additional Notes
+                        </div>
+                        <div class="card-body">
+                            <p>{{ bmr_request.notes|linebreaks|default:"No additional notes provided." }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rejection Reason -->
+            {% if bmr_request.status == 'rejected' and bmr_request.rejection_reason %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-times-circle me-1"></i> Rejection Reason
+                        </div>
+                        <div class="card-body">
+                            <p>{{ bmr_request.rejection_reason|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'bmr:bmr_request_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to List
+                </a>
+                
+                {% if bmr_request.status == 'pending' and request.user.role == 'qa' %}
+                <div>
+                    <a href="{% url 'bmr:approve_bmr_request' bmr_request.id %}" class="btn btn-success me-2">
+                        <i class="fas fa-check me-1"></i> Approve Request
+                    </a>
+                    <a href="{% url 'bmr:reject_bmr_request' bmr_request.id %}" class="btn btn-danger">
+                        <i class="fas fa-times me-1"></i> Reject Request
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

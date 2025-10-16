@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Inventory - {{ bmr.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Create Inventory Entry
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5>Batch Information</h5>
+                        <p><strong>Batch Number:</strong> {{ bmr.batch_number }}</p>
+                        <p><strong>Product:</strong> {{ bmr.product.product_name }}</p>
+                        <p><strong>Product Type:</strong> {{ bmr.product.product_type|title }}</p>
+                        <p><strong>Quantity:</strong> {{ bmr.batch_size }} {{ bmr.batch_size_unit }}</p>
+                    </div>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="shelf_life_months" class="form-label">Shelf Life (Months)</label>
+                                <input type="number" class="form-control" name="shelf_life_months" 
+                                       value="24" min="1" max="120">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="release_certificate" class="form-label">Release Certificate Number</label>
+                            <input type="text" class="form-control" name="release_certificate" 
+                                   placeholder="QA release certificate number (optional)">
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboards:finished_goods_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Create Inventory Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

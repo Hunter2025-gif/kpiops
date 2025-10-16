@@ -1,0 +1,1680 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Main layout */
+    .dashboard-container {
+        display: flex;
+        min-height: calc(100vh - 56px);
+    }
+    
+    .sidebar {
+        width: 280px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        padding: 20px 0;
+        color: white;
+        position: fixed;
+        height: calc(100vh - 56px);
+        overflow-y: auto;
+        z-index: 100;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .content-area {
+        flex: 1;
+        margin-left: 280px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 992px) {
+        .sidebar {
+            transform: translateX(-100%);
+            position: fixed;
+            z-index: 1000;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .content-area {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .toggle-sidebar {
+            display: block !important;
+        }
+    }
+    
+    .toggle-sidebar {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #764ba2;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 1001;
+    }
+    
+    /* Sidebar elements */
+    .sidebar-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 15px;
+    }
+    
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sidebar-menu li {
+        margin: 5px 0;
+    }
+    
+    .sidebar-menu a {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        padding: 12px 20px;
+        display: block;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .sidebar-menu a:hover, 
+    .sidebar-menu a.active {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left: 3px solid white;
+    }
+    
+    .sidebar-menu i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .sidebar-section {
+        padding: 10px 20px;
+        margin-top: 20px;
+        color: rgba(255,255,255,0.5);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Cards */
+    .metrics-card {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .metrics-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
+    
+    .system-card {
+        background: #059669;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .system-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    
+    .action-card {
+        background: #7c3aed;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    
+    .timeline-card {
+        background: #0891b2;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .timeline-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    
+    .monitor-card {
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .monitor-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    
+    .analytics-card {
+        background: #6366f1;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-normal { background-color: #28a745; }
+    .status-warning { background-color: #ffc107; }
+    .status-critical { background-color: #dc3545; }
+    
+    .bottleneck-item {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .bottleneck-item:last-child {
+        border-bottom: none;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .data-table {
+        color: white;
+    }
+    
+    .data-table th {
+        font-weight: 600;
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .data-table td {
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .quick-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h5 class="mb-0">
+                <i class="fas fa-user-shield me-2"></i>
+                KPI Admin
+            </h5>
+            <small class="d-block mt-1 text-white-50">System Management</small>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'dashboards:admin_dashboard' %}" class="active">
+                    <i class="fas fa-chart-line"></i> Dashboard Overview
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_timeline' %}">
+                    <i class="fas fa-timeline"></i> BMR Timeline Tracking
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_fgs_monitor' %}">
+                    <i class="fas fa-warehouse"></i> FGS Store Monitor
+                </a>
+            </li>
+            
+            <div class="sidebar-section">Production Management</div>
+            <li>
+                <a href="{% url 'bmr:list' %}">
+                    <i class="fas fa-file-medical"></i> BMR Management
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:export_timeline_data' %}?format=excel">
+                    <i class="fas fa-file-excel"></i> Export Timeline (Excel)
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:export_timeline_data' %}?format=csv">
+                    <i class="fas fa-file-csv"></i> Export Timeline (CSV)
+                </a>
+            </li>
+            
+            <div class="sidebar-section">System Management</div>
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <i class="fas fa-cogs"></i> System Administration
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:accounts_customuser_changelist' %}">
+                    <i class="fas fa-users"></i> User Management
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:products_product_changelist' %}">
+                    <i class="fas fa-pills"></i> Product Management
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+        <div class="container-fluid px-0">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="h2 mb-0">Admin Dashboard</h1>
+                    <p class="text-muted">Kampala Pharmaceutical Industries - Operations Overview</p>
+                </div>
+            </div>
+
+            <!-- Key Metrics Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Key Metrics
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'bmr:list' %}" class="text-decoration-none">
+                        <div class="card metrics-card h-100">
+                            <div class="card-body text-center">
+                                <div class="metric-value">{{ total_bmrs }}</div>
+                                <div class="metric-label">Total BMRs</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'bmr:list' %}?status=active" class="text-decoration-none">
+                        <div class="card metrics-card h-100">
+                            <div class="card-body text-center">
+                                <div class="metric-value">{{ active_batches }}</div>
+                                <div class="metric-label">Active Batches</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'bmr:list' %}?status=completed" class="text-decoration-none">
+                        <div class="card metrics-card h-100">
+                            <div class="card-body text-center">
+                                <div class="metric-value">{{ completed_batches }}</div>
+                                <div class="metric-label">Completed Batches</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{% url 'bmr:list' %}?status=rejected" class="text-decoration-none">
+                        <div class="card metrics-card h-100">
+                            <div class="card-body text-center">
+                                <div class="metric-value">{{ rejected_batches }}</div>
+                                <div class="metric-label">Rejected Batches</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Analytics Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Production Analytics
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                <!-- Production Trend Chart -->
+                <div class="col-lg-8 col-md-12 mb-3">
+                    <div class="card analytics-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Monthly Production Trend</h5>
+                            <div class="chart-container">
+                                <canvas id="productionTrendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Average Production Time -->
+                <div class="col-lg-4 col-md-12 mb-3">
+                    <div class="card analytics-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Production Cycle Time</h5>
+                            <div class="text-center mt-4">
+                                <div class="metric-value">
+                                    {% if avg_production_time %}
+                                        {{ avg_production_time }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="metric-label">Average Days (BMR to FGS)</div>
+                            </div>
+                            <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+                            <h6>By Product Type</h6>
+                            <div class="chart-container" style="height: 180px;">
+                                <canvas id="cycleTimeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <!-- Bottleneck Analysis -->
+                <div class="col-lg-5 col-md-12 mb-3">
+                    <div class="card analytics-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Production Bottleneck Analysis</h5>
+                            <p class="text-white-50">Top phases by average duration</p>
+                            <div style="max-height: 350px; overflow-y: auto;">
+                                {% if bottleneck_analysis %}
+                                    <table class="table table-borderless data-table w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>Phase Name</th>
+                                                <th>Product Type</th>
+                                                <th>Avg Hours</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in bottleneck_analysis %}
+                                            <tr>
+                                                <td>{{ item.phase_name }}</td>
+                                                <td>{{ item.product_type }}</td>
+                                                <td>{{ item.avg_hours }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <p>No bottleneck data available</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quality Metrics -->
+                <div class="col-lg-7 col-md-12 mb-3">
+                    <div class="card analytics-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Quality Control Metrics</h5>
+                            <p class="text-white-50">QC pass/fail rates by product type</p>
+                            <div class="chart-container">
+                                <canvas id="qualityMetricsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <!-- System Status -->
+                <div class="col-lg-12 mb-3">
+                    <div class="card system-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">System Status</h5>
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <span class="status-indicator status-normal me-2"></span>
+                                            <div>
+                                                <h6 class="mb-1">System Uptime</h6>
+                                                <span class="h5 mb-0">99.9%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <span class="status-indicator status-normal me-2"></span>
+                                            <div>
+                                                <h6 class="mb-1">Active Users</h6>
+                                                <span class="h5 mb-0">{{ active_users_count }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <span class="status-indicator status-normal me-2"></span>
+                                            <div>
+                                                <h6 class="mb-1">System Load</h6>
+                                                <span class="h5 mb-0">Normal</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                                        <div class="d-flex align-items-center">
+                                            <span class="status-indicator status-normal me-2"></span>
+                                            <div>
+                                                <h6 class="mb-1">Server Status</h6>
+                                                <span class="h5 mb-0">Running</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="section-title">Production Pipeline</h3>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="card monitor-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Current Production Status</h5>
+                            <div class="row">
+                                <div class="col-md-2 col-sm-4 col-6 mb-3 text-center">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded-3 h-100">
+                                        <i class="fas fa-flask fa-2x mb-2"></i>
+                                        <h6>In Production</h6>
+                                        <div class="h4 mb-0">{{ production_stats.in_production }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-4 col-6 mb-3 text-center">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded-3 h-100">
+                                        <i class="fas fa-microscope fa-2x mb-2"></i>
+                                        <h6>QC Hold</h6>
+                                        <div class="h4 mb-0">{{ production_stats.quality_hold }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-4 col-6 mb-3 text-center">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded-3 h-100">
+                                        <i class="fas fa-box fa-2x mb-2"></i>
+                                        <h6>Packaging</h6>
+                                        <div class="h4 mb-0">{{ production_stats.awaiting_packaging }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-4 col-6 mb-3 text-center">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded-3 h-100">
+                                        <i class="fas fa-clipboard-check fa-2x mb-2"></i>
+                                        <h6>Final QA</h6>
+                                        <div class="h4 mb-0">{{ production_stats.final_qa_pending }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-4 col-6 mb-3 text-center">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded-3 h-100">
+                                        <i class="fas fa-warehouse fa-2x mb-2"></i>
+                                        <h6>FGS</h6>
+                                        <div class="h4 mb-0">{{ production_stats.in_fgs }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-4 col-6 mb-3 text-center">
+                                    <div class="p-3 bg-white bg-opacity-10 rounded-3 h-100">
+                                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                        <h6>Issues</h6>
+                                        <div class="h4 mb-0">{{ stats.failed_phases }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="mb-0">
+                                <i class="fas fa-bolt me-2"></i>Quick Actions
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="card action-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">BMR Management</h5>
+                            <p class="card-text text-white-50">Create, view, and manage all batch manufacturing records</p>
+                            <div class="mt-3">
+                                <a href="{% url 'bmr:create' %}" class="btn quick-action-btn mb-2 w-100">
+                                    <i class="fas fa-plus-circle me-2"></i>Create New BMR
+                                </a>
+                                <a href="{% url 'bmr:list' %}" class="btn quick-action-btn w-100">
+                                    <i class="fas fa-list me-2"></i>View All BMRs
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="card timeline-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Timeline Analysis</h5>
+                            <p class="card-text text-white-50">Track production timelines and export data</p>
+                            <div class="mt-3">
+                                <a href="{% url 'dashboards:admin_timeline' %}" class="btn quick-action-btn mb-2 w-100">
+                                    <i class="fas fa-timeline me-2"></i>View Timeline
+                                </a>
+                                <a href="{% url 'dashboards:export_timeline_data' %}?format=excel" class="btn quick-action-btn w-100">
+                                    <i class="fas fa-file-export me-2"></i>Export Data
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-12 mb-3">
+                    <div class="card monitor-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Store Monitoring</h5>
+                            <p class="card-text text-white-50">Monitor store operations and finished goods</p>
+                            <div class="mt-3">
+                                <a href="{% url 'dashboards:admin_fgs_monitor' %}" class="btn quick-action-btn w-100">
+                                    <i class="fas fa-boxes me-2"></i>FGS Monitor
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile toggle button -->
+    <div class="toggle-sidebar">
+        <i class="fas fa-bars"></i>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle sidebar for mobile
+    const toggleBtn = document.querySelector('.toggle-sidebar');
+    const sidebar = document.querySelector('.sidebar');
+    const contentArea = document.querySelector('.content-area');
+    
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+        });
+    }
+    
+    // Auto-refresh data every 5 minutes
+    setInterval(function() {
+        if (document.hasFocus()) {
+            location.reload();
+        }
+    }, 300000);
+    
+    // Add loading indicators for export buttons
+    const exportButtons = document.querySelectorAll('a[href*="export"]');
+    exportButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            this.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.style.pointerEvents = 'auto';
+            }, 3000);
+        });
+    });
+    
+    // Production Trend Chart
+    const productionTrendCtx = document.getElementById('productionTrendChart');
+    if (productionTrendCtx) {
+        const productionTrendChart = new Chart(productionTrendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ monthly_stats.labels|safe|default:"[]" }},
+                datasets: [
+                    {
+                        label: 'Created',
+                        data: {{ monthly_stats.created|safe|default:"[]" }},
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff'
+                    },
+                    {
+                        label: 'Completed',
+                        data: {{ monthly_stats.completed|safe|default:"[]" }},
+                        backgroundColor: 'rgba(132, 255, 132, 0.2)',
+                        borderColor: '#84ff84',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointBackgroundColor: '#84ff84'
+                    },
+                    {
+                        label: 'Rejected',
+                        data: {{ monthly_stats.rejected|safe|default:"[]" }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: '#ff6384',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff6384'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Cycle Time Chart
+    const cycleTimeCtx = document.getElementById('cycleTimeChart');
+    if (cycleTimeCtx) {
+        const cycleTimeChart = new Chart(cycleTimeCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ cycle_times.labels|safe|default:"[]" }},
+                datasets: [
+                    {
+                        label: 'Average Days',
+                        data: {{ cycle_times.avg_days|safe|default:"[]" }},
+                        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Quality Metrics Chart
+    const qualityMetricsCtx = document.getElementById('qualityMetricsChart');
+    if (qualityMetricsCtx) {
+        const qualityMetricsChart = new Chart(qualityMetricsCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ quality_metrics.labels|safe|default:"[]" }},
+                datasets: [
+                    {
+                        label: 'Pass Rate (%)',
+                        data: {{ quality_metrics.pass_rates|safe|default:"[]" }},
+                        backgroundColor: 'rgba(132, 255, 132, 0.6)',
+                        borderColor: '#84ff84',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Fail Rate (%)',
+                        data: {{ quality_metrics.fail_rates|safe|default:"[]" }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: '#ff6384',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-normal { background-color: #28a745; }
+    .status-warning { background-color: #ffc107; }
+    .status-critical { background-color: #dc3545; }
+    
+    .bottleneck-item {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .bottleneck-item:last-child {
+        border-bottom: none;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .data-table {
+        color: white;
+    }
+    
+    .data-table th {
+        font-weight: 600;
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .data-table td {
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .quick-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h5 class="mb-0">
+                <i class="fas fa-user-shield me-2"></i>
+                KPI Admin
+            </h5>
+            <small class="d-block mt-1 text-white-50">System Management</small>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'dashboards:admin_dashboard' %}" class="active">
+                    <i class="fas fa-chart-line"></i> Dashboard Overview
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_timeline' %}">
+                    <i class="fas fa-timeline"></i> BMR Timeline Tracking
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_fgs_monitor' %}">
+                    <i class="fas fa-warehouse"></i> FGS Store Monitor
+                </a>
+            </li>
+            
+            <div class="sidebar-section">Production Management</div>
+            <li>
+                <a href="{% url 'bmr:list' %}">
+                    <i class="fas fa-file-medical"></i> BMR Management
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:export_timeline_data' %}?format=excel">
+                    <i class="fas fa-file-excel"></i> Export Timeline (Excel)
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:export_timeline_data' %}?format=csv">
+                    <i class="fas fa-file-csv"></i> Export Timeline (CSV)
+                </a>
+            </li>
+            
+            <div class="sidebar-section">System Management</div>
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <i class="fas fa-cogs"></i> System Administration
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:accounts_customuser_changelist' %}">
+                    <i class="fas fa-users"></i> User Management
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:products_product_changelist' %}">
+                    <i class="fas fa-pills"></i> Product Management
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+        <div class="container-fluid px-0">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="h2 mb-0">Admin Dashboard</h1>
+                    <p class="text-muted">Kampala Pharmaceutical Industries - Operations Overview</p>
+                </div>
+            </div>
+
+    <!-- Key Metrics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Key Metrics</h3>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'bmr:list' %}" class="text-decoration-none">
+                <div class="card metrics-card h-100">
+                    <div class="card-body text-center">
+                        <div class="metric-value">{{ total_bmrs }}</div>
+                        <div class="metric-label">Total BMRs</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'bmr:list' %}?status=active" class="text-decoration-none">
+                <div class="card metrics-card h-100">
+                    <div class="card-body text-center">
+                        <div class="metric-value">{{ active_batches }}</div>
+                        <div class="metric-label">Active Batches</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'bmr:list' %}?status=completed" class="text-decoration-none">
+                <div class="card metrics-card h-100">
+                    <div class="card-body text-center">
+                        <div class="metric-value">{{ completed_batches }}</div>
+                        <div class="metric-label">Completed Batches</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <a href="{% url 'bmr:list' %}?status=rejected" class="text-decoration-none">
+                <div class="card metrics-card h-100">
+                    <div class="card-body text-center">
+                        <div class="metric-value">{{ rejected_batches }}</div>
+                        <div class="metric-label">Rejected Batches</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- System Status Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">System Status</h3>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">System Uptime</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h5 mb-0">99.9%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Active Users</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h5 mb-0">{{ active_users_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">System Load</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h5 mb-0">Normal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Features Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Main Features</h3>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Timeline Card -->
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card timeline-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">BMR Timeline</h5>
+                    <p class="card-text mb-3">Complete production timeline with phase tracking and export capabilities.</p>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{% url 'dashboards:admin_timeline' %}" class="btn quick-action-btn">
+                            <i class="fas fa-timeline me-2"></i>View Timeline
+                        </a>
+                        <a href="{% url 'dashboards:export_timeline_data' %}?format=csv" class="btn quick-action-btn">
+                            <i class="fas fa-download me-2"></i>Export CSV
+                        </a>
+                        <a href="{% url 'dashboards:export_timeline_data' %}?format=excel" class="btn quick-action-btn">
+                            <i class="fas fa-file-excel me-2"></i>Export Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FGS Monitor Card -->
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card monitor-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">FGS Store Monitor</h5>
+                    <p class="card-text mb-3">Monitor finished goods storage and inventory levels.</p>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{% url 'dashboards:admin_fgs_monitor' %}" class="btn quick-action-btn">
+                            <i class="fas fa-warehouse me-2"></i>View FGS Store
+                        </a>
+                        <div class="mt-2">
+                            <small>Total Items: <strong>{{ fgs_total_items }}</strong></small><br>
+                            <small>Low Stock: <strong>{{ fgs_low_stock }}</strong></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions Card -->
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card action-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Quick Actions</h5>
+                    <p class="card-text mb-3">Common administrative actions and system management.</p>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="/admin/" class="btn quick-action-btn">
+                            <i class="fas fa-cogs me-2"></i>Django Admin
+                        </a>
+                        <a href="{% url 'home' %}" class="btn quick-action-btn">
+                            <i class="fas fa-tachometer-alt me-2"></i>Main Dashboard
+                        </a>
+                        <button class="btn quick-action-btn" onclick="location.reload();">
+                            <i class="fas fa-sync me-2"></i>Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional System Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">System Information</h3>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Database Status</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h6 mb-0">Connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Background Jobs</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h6 mb-0">Running</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Last Backup</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h6 mb-0">Today 3:00 AM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">System Alerts</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator status-normal"></span>
+                        <span class="h6 mb-0">None</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Analytics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="section-title">Production Analytics</h3>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Production Trend Chart -->
+        <div class="col-lg-8 col-md-12 mb-3">
+            <div class="card analytics-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Production Trend</h5>
+                    <div class="chart-container">
+                        <canvas id="productionTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Average Production Time -->
+        <div class="col-lg-4 col-md-12 mb-3">
+            <div class="card analytics-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Production Cycle Time</h5>
+                    <div class="text-center mt-4">
+                        <div class="metric-value">
+                            {% if avg_production_time %}
+                                {{ avg_production_time }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                        <div class="metric-label">Average Days (BMR to FGS)</div>
+                    </div>
+                    <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+                    <h6>By Product Type</h6>
+                    <div class="chart-container" style="height: 180px;">
+                        <canvas id="cycleTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Bottleneck Analysis -->
+        <div class="col-lg-5 col-md-12 mb-3">
+            <div class="card analytics-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Production Bottleneck Analysis</h5>
+                    <p class="text-white-50">Top phases by average duration</p>
+                    <div style="max-height: 350px; overflow-y: auto;">
+                        {% if bottleneck_analysis %}
+                            <table class="table table-borderless data-table w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Phase Name</th>
+                                        <th>Product Type</th>
+                                        <th>Avg Hours</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in bottleneck_analysis %}
+                                    <tr>
+                                        <td>{{ item.phase_name }}</td>
+                                        <td>{{ item.product_type }}</td>
+                                        <td>{{ item.avg_hours }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No bottleneck data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quality Metrics -->
+        <div class="col-lg-7 col-md-12 mb-3">
+            <div class="card analytics-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Quality Control Metrics</h5>
+                    <p class="text-white-50">QC pass/fail rates by product type</p>
+                    <div class="chart-container">
+                        <canvas id="qualityMetricsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Productivity Metrics -->
+        <div class="col-lg-6 col-md-12 mb-3">
+            <div class="card analytics-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Operator Productivity (Last 30 Days)</h5>
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            <small class="d-block text-white-50">Total Operators</small>
+                            <h5>{{ productivity_metrics.total_operators }}</h5>
+                        </div>
+                        <div>
+                            <small class="d-block text-white-50">Total Completions</small>
+                            <h5>{{ productivity_metrics.total_completions }}</h5>
+                        </div>
+                    </div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        {% if productivity_metrics.top_operators %}
+                            <table class="table table-borderless data-table w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Operator</th>
+                                        <th>Completed Phases</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for operator, data in productivity_metrics.top_operators %}
+                                    <tr>
+                                        <td>{{ operator }}</td>
+                                        <td>{{ data.count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No productivity data available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Export Options -->
+        <div class="col-lg-6 col-md-12 mb-3">
+            <div class="card analytics-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Analytics & Reports</h5>
+                    <p class="text-white-50">Export and analyze production data</p>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <a href="{% url 'dashboards:export_timeline_data' %}?format=excel" class="btn quick-action-btn w-100">
+                                <i class="fas fa-file-excel me-2"></i>Export Timeline (Excel)
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'dashboards:export_timeline_data' %}?format=csv" class="btn quick-action-btn w-100">
+                                <i class="fas fa-file-csv me-2"></i>Export Timeline (CSV)
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'dashboards:admin_timeline' %}" class="btn quick-action-btn w-100">
+                                <i class="fas fa-chart-line me-2"></i>Timeline Analysis
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'dashboards:admin_fgs_monitor' %}" class="btn quick-action-btn w-100">
+                                <i class="fas fa-boxes me-2"></i>FGS Monitor
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh data every 5 minutes
+    setInterval(function() {
+        location.reload();
+    }, 300000);
+    
+    // Add loading indicators for export buttons
+    const exportButtons = document.querySelectorAll('a[href*="export"]');
+    exportButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            this.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.style.pointerEvents = 'auto';
+            }, 3000);
+        });
+    });
+    
+    // Production Trend Chart
+    const productionTrendCtx = document.getElementById('productionTrendChart').getContext('2d');
+    const productionTrendChart = new Chart(productionTrendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_stats.labels|safe }},
+            datasets: [
+                {
+                    label: 'Created',
+                    data: {{ monthly_stats.created|safe }},
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffffff'
+                },
+                {
+                    label: 'Completed',
+                    data: {{ monthly_stats.completed|safe }},
+                    backgroundColor: 'rgba(132, 255, 132, 0.2)',
+                    borderColor: '#84ff84',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointBackgroundColor: '#84ff84'
+                },
+                {
+                    label: 'Rejected',
+                    data: {{ monthly_stats.rejected|safe }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: '#ff6384',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ff6384'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Cycle Time Chart
+    const cycleTimeCtx = document.getElementById('cycleTimeChart').getContext('2d');
+    const cycleTimeChart = new Chart(cycleTimeCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ cycle_times.labels|safe }},
+            datasets: [
+                {
+                    label: 'Average Days',
+                    data: {{ cycle_times.avg_days|safe }},
+                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Quality Metrics Chart
+    const qualityMetricsCtx = document.getElementById('qualityMetricsChart').getContext('2d');
+    const qualityMetricsChart = new Chart(qualityMetricsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ quality_metrics.labels|safe }},
+            datasets: [
+                {
+                    label: 'Pass Rate (%)',
+                    data: {{ quality_metrics.pass_rates|safe }},
+                    backgroundColor: 'rgba(132, 255, 132, 0.6)',
+                    borderColor: '#84ff84',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Fail Rate (%)',
+                    data: {{ quality_metrics.fail_rates|safe }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: '#ff6384',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'white'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Additional scripts can be moved here if needed
+</script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+
+        <div class="card shadow">
+            <div class="card-header text-white text-center" style="background-color: #0056b3;">
+                {% load static %}
+                <div class="mb-2">
+                    <img src="{% static 'Main Logo.png' %}" alt="KPI Logo" height="40" onerror="this.style.display='none'">
+                </div>
+                <h4 class="mb-0" style="color: white;">
+                    Kampala Pharmaceutical Industries
+                </h4>
+                <p class="mb-0 mt-1" style="color: white;">Commitment to good health</p>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-1"></i>
+                            Username
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>
+                            Password
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Login
+                        </button>
+                    </div>
+                </form>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <small class="text-muted">
+                        <strong>For Admin Access:</strong><br>
+                        <a href="{% url 'admin:index' %}" class="text-decoration-none">
+                            <i class="fas fa-cog me-1"></i>
+                            Admin Panel
+                        </a>
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+
+
+    </div>
+</div>
+{% endblock %}

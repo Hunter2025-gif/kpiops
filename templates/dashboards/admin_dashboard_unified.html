@@ -1,0 +1,709 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        display: flex;
+        min-height: calc(100vh - 56px);
+        background-color: #f8f9fa;
+    }
+    
+    .sidebar {
+        width: 250px;
+        background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%);
+        color: white;
+        position: fixed;
+        top: 56px;
+        left: 0;
+        height: calc(100vh - 56px);
+        overflow-y: auto;
+        z-index: 1030;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        background: rgba(0,0,0,0.1);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .sidebar-header h4 {
+        margin: 0;
+        font-weight: 700;
+        color: white;
+    }
+    
+    .sidebar-section {
+        color: rgba(255,255,255,0.6);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 15px 20px 10px;
+        margin-top: 10px;
+    }
+    
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sidebar-menu li {
+        margin: 0;
+    }
+    
+    .sidebar-menu a {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left-color: #4facfe;
+    }
+    
+    .sidebar-menu a i {
+        margin-right: 10px;
+        width: 16px;
+        text-align: center;
+    }
+    
+    .content-area {
+        flex: 1;
+        margin-left: 250px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        min-height: calc(100vh - 56px);
+        overflow-y: auto;
+        transition: all 0.3s ease;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 992px) {
+        .sidebar {
+            transform: translateX(-100%);
+            position: fixed;
+            z-index: 1000;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .content-area {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .dashboard-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .metric-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .metric-label {
+        color: #666;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .section-title {
+        color: #333;
+        margin-bottom: 25px;
+        font-size: 1.8rem;
+        font-weight: 600;
+        border-bottom: 3px solid #007bff;
+        padding-bottom: 10px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 20px 0;
+    }
+    
+    .timeline-overview {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-stats {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+    
+    .timeline-stat {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        min-width: 150px;
+    }
+    
+    .timeline-stat.completed { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .timeline-stat.in-progress { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .timeline-stat.avg-time { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    
+    .timeline-stat h4 {
+        font-size: 2rem;
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .timeline-stat p {
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .data-table {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+    
+    .table {
+        margin: 0;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border: none;
+        color: #333;
+        font-weight: 600;
+        padding: 15px;
+    }
+    
+    .table td {
+        border: none;
+        padding: 15px;
+        vertical-align: middle;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid #eee;
+        transition: all 0.3s ease;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+    }
+    
+    .batch-number {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .search-filter {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    
+    .search-input, .filter-select {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus, .filter-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 10px rgba(0,123,255,0.2);
+        outline: none;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-header h1 { font-size: 2rem; }
+        .metric-value { font-size: 2rem; }
+        .timeline-stats { flex-direction: column; gap: 15px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h4>KPI Admin</h4>
+        </div>
+        
+        <div class="sidebar-section">Main</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'dashboards:admin_dashboard' %}" class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_timeline' %}">
+                    <i class="fas fa-clock"></i> Timeline
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_fgs_monitor' %}">
+                    <i class="fas fa-boxes"></i> FGS Monitor
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-section">Production</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'bmr:list' %}">
+                    <i class="fas fa-file-medical"></i> BMR Management
+                </a>
+            </li>
+            <li>
+                <a href="#active-phases" onclick="scrollToSection('active-phases')">
+                    <i class="fas fa-tasks"></i> Active Phases
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-section">Admin</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="content-area">
+        <!-- Page Header -->
+        <div class="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <p>Kampala Pharmaceutical Industries - Operations Overview</p>
+            <!-- UNIFIED TEMPLATE IDENTIFIER -->
+            <small style="opacity: 0.7;">Unified Dashboard v2.0 - All Features Integrated</small>
+        </div>
+
+    <!-- Key Metrics Section -->
+    <div class="row mb-5">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="metric-value">{{ total_bmrs|default:"0" }}</div>
+                <div class="metric-label">Total BMRs</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="metric-value">{{ active_batches|default:"0" }}</div>
+                <div class="metric-label">Active Batches</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="metric-value">{{ completed_batches|default:"0" }}</div>
+                <div class="metric-label">Completed Batches</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="metric-value">{{ rejected_batches|default:"0" }}</div>
+                <div class="metric-label">Rejected Batches</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Charts Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="section-title">Production Analytics</h2>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="data-table">
+                <h5>Production by Product Type</h5>
+                <div class="chart-container">
+                    <canvas id="productTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="data-table">
+                <h5>Phase Completion Status</h5>
+                <div class="chart-container">
+                    <canvas id="phaseStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="section-title">BMR Timeline Tracking</h2>
+        </div>
+        
+        <!-- Timeline Overview -->
+        <div class="col-12 mb-4">
+            <div class="timeline-overview">
+                <div class="timeline-stats">
+                    <div class="timeline-stat">
+                        <h4>{{ total_bmrs|default:"0" }}</h4>
+                        <p>Total BMRs</p>
+                    </div>
+                    <div class="timeline-stat completed">
+                        <h4>{{ completed_count|default:"0" }}</h4>
+                        <p>Completed</p>
+                    </div>
+                    <div class="timeline-stat in-progress">
+                        <h4>{{ in_progress_count|default:"0" }}</h4>
+                        <p>In Progress</p>
+                    </div>
+                    <div class="timeline-stat avg-time">
+                        <h4>{% if avg_production_time %}{{ avg_production_time }}d{% else %}N/A{% endif %}</h4>
+                        <p>Avg. Cycle Time</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search and Filter -->
+        <div class="col-12 mb-4">
+            <div class="search-filter">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control search-input" id="searchTimeline" 
+                               placeholder="Search by batch number, product..." oninput="filterTable()">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-control filter-select" id="filterProductType" onchange="filterTable()">
+                            <option value="">All Product Types</option>
+                            <option value="tablet">Tablets</option>
+                            <option value="capsule">Capsules</option>
+                            <option value="ointment">Ointments</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-control filter-select" id="filterStatus" onchange="filterTable()">
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="in_progress">In Progress</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timeline Table -->
+        <div class="col-12">
+            <div class="data-table">
+                <div class="table-responsive">
+                    <table class="table" id="timelineTable">
+                        <thead>
+                            <tr>
+                                <th>BMR Number</th>
+                                <th>Product</th>
+                                <th>Product Type</th>
+                                <th>Status</th>
+                                <th>Created Date</th>
+                                <th>Current Phase</th>
+                                <th>Total Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in timeline_data %}
+                            <tr data-product-type="{{ item.bmr.product.product_type|lower }}" 
+                                data-status="{% if item.is_completed %}completed{% else %}in_progress{% endif %}">
+                                <td class="batch-number">{{ item.bmr.bmr_number }}</td>
+                                <td>{{ item.bmr.product.product_name }}</td>
+                                <td>{{ item.bmr.product.product_type|title }}</td>
+                                <td>
+                                    <span class="badge {% if item.is_completed %}bg-success{% else %}bg-warning{% endif %}">
+                                        {% if item.is_completed %}Completed{% else %}In Progress{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ item.bmr.created_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if item.current_phase %}
+                                        {{ item.current_phase.phase.phase_name|title }}
+                                    {% else %}
+                                        Completed
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.total_time_days %}
+                                        {{ item.total_time_days }} days
+                                    {% else %}
+                                        In Progress
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="togglePhaseDetails('{{ item.bmr.bmr_number }}')">
+                                        <i class="fas fa-eye"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Phase details row (hidden by default) -->
+                            <tr id="details-{{ item.bmr.bmr_number }}" style="display: none;">
+                                <td colspan="8">
+                                    <div class="phase-details">
+                                        <h6>Phase Timeline:</h6>
+                                        <div class="row">
+                                            {% for phase in item.phase_timeline %}
+                                            <div class="col-md-6 mb-2">
+                                                <small>
+                                                    <strong>{{ phase.phase_name }}:</strong>
+                                                    <span class="badge badge-sm {% if phase.status == 'Completed' %}bg-success{% elif phase.status == 'In Progress' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                        {{ phase.status }}
+                                                    </span>
+                                                    {% if phase.duration_hours %}
+                                                        ({{ phase.duration_hours }}h)
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No BMRs found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Phases Section -->
+    <div class="row mb-5" id="active-phases">
+        <div class="col-12">
+            <h2 class="section-title">Active Phases</h2>
+        </div>
+        <div class="col-12">
+            <div class="data-table">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>BMR Number</th>
+                                <th>Product</th>
+                                <th>Phase</th>
+                                <th>Status</th>
+                                <th>Started Date</th>
+                                <th>Duration</th>
+                                <th>Operator</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for phase in active_phases %}
+                            <tr>
+                                <td class="batch-number">{{ phase.bmr.bmr_number }}</td>
+                                <td>{{ phase.bmr.product.product_name }}</td>
+                                <td>{{ phase.phase.phase_name|title }}</td>
+                                <td>
+                                    <span class="badge {% if phase.status == 'in_progress' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                        {{ phase.status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ phase.started_date|date:"M d, Y H:i" }}</td>
+                                <td>{{ phase.duration_hours|floatformat:1 }} hours</td>
+                                <td>{{ phase.started_by.get_full_name|default:"N/A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No active phases found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    </div> <!-- End content-area -->
+</div> <!-- End dashboard-container -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chart initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Product Type Chart
+    const productCtx = document.getElementById('productTypeChart');
+    if (productCtx) {
+        new Chart(productCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tablets', 'Capsules', 'Ointments'],
+                datasets: [{
+                    data: [7, 3, 2],
+                    backgroundColor: ['#4facfe', '#fa709a', '#ffc371'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Phase Status Chart
+    const phaseCtx = document.getElementById('phaseStatusChart');
+    if (phaseCtx) {
+        new Chart(phaseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mixing', 'Drying', 'Granulation', 'Compression', 'Packing'],
+                datasets: [{
+                    label: 'Completed',
+                    data: [55, 33, 89, 134, 177],
+                    backgroundColor: '#4facfe'
+                }, {
+                    label: 'In Progress',
+                    data: [32, 11, 55, 72, 91],
+                    backgroundColor: '#fa709a'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+});
+
+// Timeline filtering functionality
+function filterTable() {
+    const searchInput = document.getElementById('searchTimeline');
+    const productTypeFilter = document.getElementById('filterProductType');
+    const statusFilter = document.getElementById('filterStatus');
+    const table = document.getElementById('timelineTable');
+    
+    if (!table) return;
+    
+    const tbody = table.getElementsByTagName('tbody')[0];
+    const rows = tbody.getElementsByTagName('tr');
+    
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const productTypeValue = productTypeFilter ? productTypeFilter.value.toLowerCase() : '';
+    const statusValue = statusFilter ? statusFilter.value.toLowerCase() : '';
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Skip detail rows
+        if (row.cells.length === 1) continue;
+        
+        const batchNumber = row.cells[0] ? row.cells[0].textContent.toLowerCase() : '';
+        const productName = row.cells[1] ? row.cells[1].textContent.toLowerCase() : '';
+        const productType = row.getAttribute('data-product-type') || '';
+        const status = row.getAttribute('data-status') || '';
+        
+        const matchesSearch = batchNumber.includes(searchTerm) || productName.includes(searchTerm);
+        const matchesProductType = !productTypeValue || productType.includes(productTypeValue);
+        const matchesStatus = !statusValue || status.includes(statusValue);
+        
+        if (matchesSearch && matchesProductType && matchesStatus) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+// Toggle phase details
+function togglePhaseDetails(bmrNumber) {
+    const detailsRow = document.getElementById('details-' + bmrNumber);
+    if (detailsRow) {
+        detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
+    }
+}
+
+// Scroll to section function for sidebar navigation
+function scrollToSection(sectionId) {
+    const element = document.getElementById(sectionId);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+</script>
+{% endblock %}

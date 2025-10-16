@@ -1,0 +1,359 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Quarantine Details - {{ quarantine_batch.bmr.batch_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        padding: 20px;
+    }
+    
+    .timeline-item {
+        border-left: 3px solid #e9ecef;
+        padding-left: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #6c757d;
+    }
+    
+    .timeline-item.approved::before {
+        background: #28a745;
+    }
+    
+    .timeline-item.rejected::before {
+        background: #dc3545;
+    }
+    
+    .timeline-item.pending::before {
+        background: #ffc107;
+    }
+    
+    .timeline-item.approved {
+        border-left-color: #28a745;
+    }
+    
+    .timeline-item.rejected {
+        border-left-color: #dc3545;
+    }
+    
+    .timeline-item.pending {
+        border-left-color: #ffc107;
+    }
+    
+    .sample-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #f8f9fa;
+    }
+    
+    .sample-card.approved {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+    
+    .sample-card.rejected {
+        border-color: #dc3545;
+        background: #f8d7da;
+    }
+    
+    .sample-card.pending {
+        border-color: #ffc107;
+        background: #fff3cd;
+    }
+    
+    .metric-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .metric-row:last-child {
+        border-bottom: none;
+    }
+    
+    .metric-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .metric-value {
+        font-weight: 600;
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Quarantine Details</h1>
+            <p class="text-muted">Batch {{ quarantine_batch.bmr.batch_number }} - {{ quarantine_batch.bmr.product.product_name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'quarantine:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Batch Overview -->
+        <div class="col-md-4 mb-4">
+            <div class="detail-card">
+                <h5><i class="fas fa-info-circle"></i> Batch Information</h5>
+                <div class="mt-3">
+                    <div class="metric-row">
+                        <span class="metric-label">Batch Number:</span>
+                        <span class="metric-value">{{ quarantine_batch.bmr.batch_number }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Product:</span>
+                        <span class="metric-value">{{ quarantine_batch.bmr.product.product_name }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Created By:</span>
+                        <span class="metric-value">{{ quarantine_batch.bmr.created_by.get_full_name }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Current Status:</span>
+                            <span class="badge badge-{% if quarantine_batch.status == 'sample_approved' %}success{% elif quarantine_batch.status == 'sample_rejected' %}danger{% else %}warning{% endif %}">
+                                {% if quarantine_batch.get_status_display %}
+                                    {{ quarantine_batch.get_status_display }}
+                                {% else %}
+                                    {{ quarantine_batch.status|title }}
+                                {% endif %}
+                            </span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Current Phase:</span>
+                        <span class="metric-value">
+                            {% if quarantine_batch.current_phase %}
+                                {{ quarantine_batch.current_phase.phase_name|title }}
+                            {% else %}
+                                No phase assigned
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Metrics -->
+        <div class="col-md-4 mb-4">
+            <div class="detail-card">
+                <h5><i class="fas fa-clock"></i> Timeline Metrics</h5>
+                <div class="mt-3">
+                    <div class="metric-row">
+                        <span class="metric-label">Quarantine Start:</span>
+                        <span class="metric-value">{{ timeline_data.quarantine_start|date:"M d, Y H:i" }}</span>
+                    </div>
+                    {% if timeline_data.quarantine_end %}
+                    <div class="metric-row">
+                        <span class="metric-label">Released:</span>
+                        <span class="metric-value">{{ timeline_data.quarantine_end|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Total Duration:</span>
+                        <span class="metric-value">{{ timeline_data.total_quarantine_duration|floatformat:1 }} hours</span>
+                    </div>
+                    {% else %}
+                    <div class="metric-row">
+                        <span class="metric-label">Status:</span>
+                        <span class="metric-value text-warning">Still in Quarantine</span>
+                    </div>
+                    {% endif %}
+                    <div class="metric-row">
+                        <span class="metric-label">Phase Before:</span>
+                        <span class="metric-value">
+                            {% if timeline_data.phase_before_quarantine %}
+                                {{ timeline_data.phase_before_quarantine|title }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sample Statistics -->
+        <div class="col-md-4 mb-4">
+            <div class="detail-card">
+                <h5><i class="fas fa-vial"></i> Sample Statistics</h5>
+                <div class="mt-3">
+                    <div class="metric-row">
+                        <span class="metric-label">Total Samples:</span>
+                        <span class="metric-value">{{ timeline_data.total_samples_requested }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Approved:</span>
+                        <span class="metric-value text-success">{{ timeline_data.approved_samples }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Rejected:</span>
+                        <span class="metric-value text-danger">{{ timeline_data.rejected_samples }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Pending:</span>
+                        <span class="metric-value text-warning">{{ timeline_data.pending_samples }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sample Requests Timeline -->
+        <div class="col-md-8 mb-4">
+            <div class="detail-card">
+                <h5><i class="fas fa-history"></i> Sample Requests Timeline</h5>
+                <div class="mt-4">
+                    {% for sample in sample_requests %}
+                    <div class="timeline-item {% if sample.qc_status == 'approved' %}approved{% elif sample.qc_status == 'failed' %}rejected{% else %}pending{% endif %}">
+                        <div class="sample-card {% if sample.qc_status == 'approved' %}approved{% elif sample.qc_status == 'failed' %}rejected{% else %}pending{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">Sample {{ sample.sample_number }}</h6>
+                                <span class="badge badge-{% if sample.qc_status == 'approved' %}success{% elif sample.qc_status == 'failed' %}danger{% else %}warning{% endif %}">
+                                    {% if sample.qc_status == 'approved' %}Approved{% elif sample.qc_status == 'failed' %}Failed{% else %}{{ sample.get_qc_status_display }}{% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Request Details:</strong><br>
+                                    <small class="text-muted">{{ sample.request_date|date:"M d, Y H:i" }}</small><br>
+                                    <small>by {{ sample.requested_by.get_full_name }}</small>
+                                </div>
+                                
+                                {% if sample.sample_date %}
+                                <div class="col-md-6">
+                                    <strong>QA Received:</strong><br>
+                                    <small class="text-muted">{{ sample.sample_date|date:"M d, Y H:i" }}</small><br>
+                                    <small>by {{ sample.sampled_by.get_full_name }}</small>
+                                    {% if sample.qa_processing_time %}
+                                        <br><small class="text-info">Processing: {{ sample.qa_processing_time|floatformat:1 }}h</small>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if sample.received_date %}
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <strong>QC Received:</strong><br>
+                                    <small class="text-muted">{{ sample.received_date|date:"M d, Y H:i" }}</small><br>
+                                    <small>by {{ sample.received_by.get_full_name }}</small>
+                                </div>
+                                
+                                {% if sample.approved_date %}
+                                <div class="col-md-6">
+                                    <strong>QC Decision:</strong><br>
+                                    <small class="text-muted">{{ sample.approved_date|date:"M d, Y H:i" }}</small><br>
+                                    {% if sample.qc_status == 'approved' %}
+                                        <small class="text-success">Approved by {{ sample.approved_by.get_full_name }}</small>
+                                    {% elif sample.qc_status == 'failed' %}
+                                        <small class="text-danger">Rejected by {{ sample.approved_by.get_full_name }}</small>
+                                    {% endif %}
+                                    {% if sample.qc_processing_time %}
+                                        <br><small class="text-info">QC Time: {{ sample.qc_processing_time|floatformat:1 }}h</small>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if sample.qc_comments %}
+                            <div class="mt-2">
+                                <strong>QC Comments:</strong><br>
+                                <small class="text-muted">{{ sample.qc_comments }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-vial fa-3x mb-3"></i>
+                        <p>No sample requests found for this batch</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase Execution History -->
+        <div class="col-md-4 mb-4">
+            <div class="detail-card">
+                <h5><i class="fas fa-list-ol"></i> Phase History</h5>
+                <div class="mt-3">
+                    {% for phase_execution in phase_executions %}
+                    <div class="mb-3 p-2 border-left border-{% if phase_execution.status == 'completed' %}success{% elif phase_execution.status == 'failed' %}danger{% elif phase_execution.status == 'in_progress' %}primary{% else %}secondary{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{ phase_execution.phase.phase_name|title }}</strong>
+                            <span class="badge badge-{% if phase_execution.status == 'completed' %}success{% elif phase_execution.status == 'failed' %}danger{% elif phase_execution.status == 'in_progress' %}primary{% else %}secondary{% endif %}">
+                                {{ phase_execution.get_status_display }}
+                            </span>
+                        </div>
+                        
+                        {% if phase_execution.started_date %}
+                        <small class="text-muted d-block">
+                            Started: {{ phase_execution.started_date|date:"M d, Y H:i" }}
+                            {% if phase_execution.started_by %}
+                                by {{ phase_execution.started_by.get_full_name }}
+                            {% endif %}
+                        </small>
+                        {% endif %}
+                        
+                        {% if phase_execution.completed_date %}
+                        <small class="text-muted d-block">
+                            Completed: {{ phase_execution.completed_date|date:"M d, Y H:i" }}
+                            {% if phase_execution.completed_by %}
+                                by {{ phase_execution.completed_by.get_full_name }}
+                            {% endif %}
+                        </small>
+                        {% endif %}
+                        
+                        {% if phase_execution.comments %}
+                        <small class="text-info d-block mt-1">{{ phase_execution.comments }}</small>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted">
+                        <p>No phase execution history available</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh page every 30 seconds for live updates
+setTimeout(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

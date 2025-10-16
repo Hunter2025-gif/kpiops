@@ -1,0 +1,92 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# Virtual Environment
+pharma_env/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Development and Testing Files
+test_*.py
+debug_*.py
+fix_*.py
+verify_*.py
+*_test.py
+*_debug.py
+analyze_*.py
+check_*.py
+create_test_*.py
+cleanup_*.py
+emergency_*.py
+final_*.py
+quick_*.py
+simple_*.py
+setup_*.py
+update_*.py
+populate_*.py
+generate_*.py
+integrate_*.py
+remove_*.py
+restore_*.py
+repair_*.py
+comprehensive_*.py
+permanent_*.py
+
+# Development Scripts
+*.bat
+*.ps1
+activate_env.*
+start_server.*
+restart_*.*
+run_repair.*
+
+# Development Documentation
+*_IMPLEMENTATION.md
+*_SUMMARY.md
+*_GUIDE.md
+*_INSTRUCTIONS.md
+*_ANALYSIS.md
+*_DOCUMENTATION.md
+*_RESOLVED.md
+*_FIXED.md
+*_GUARANTEE.md
+TESTING_GUIDE.md
+DEPLOYMENT_SUMMARY.md
+WORKFLOW_*.md
+DASHBOARD_*.md
+BULK_*.md
+ENHANCED_*.md
+ROLE_*.md
+REPORTS_*.md
+MACHINES_*.md
+PACKAGING_*.md
+MIGRATION_*.md
+VISUAL_DIAGRAMS.md
+
+# Development Artifacts
+template_debug.log
+chart_debugger.html
+rendered_template.html
+ERD_Diagram.html
+batch_analysis*.txt
+
+# Backup folders
+backups/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,961 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block extra_css %}
+<!-- Include Chart.js in head section -->
+<script>
+// Direct chart script - embedded to avoid static file issues
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Direct chart script loaded');
+    
+    // Chart data - direct embedding
+    const productData = {
+        tablets: 7,
+        capsules: 3,
+        ointments: 2
+    };
+    
+    const phaseData = {
+        mixing_completed: 55,
+        mixing_inprogress: 32,
+        drying_completed: 33,
+        drying_inprogress: 11,
+        granulation_completed: 89,
+        granulation_inprogress: 55,
+        compression_completed: 134,
+        compression_inprogress: 72,
+        packing_completed: 177,
+        packing_inprogress: 91
+    };
+    
+    const weeklyData = {
+        started_week4: 7,
+        completed_week4: 5,
+        started_week3: 8,
+        completed_week3: 6,
+        started_week2: 6,
+        completed_week2: 4,
+        started_week1: 4,
+        completed_week1: 2
+    };
+    
+    const qcData = {
+        passed: 127,
+        failed: 5,
+        pending: 78
+    };
+    
+    // Initialize charts
+    setTimeout(function() {
+        try {
+            initProductTypeChart();
+            initPhaseStatusChart();
+            initWeeklyTrendChart();
+            initQcStatusChart();
+            console.log('All charts initialized');
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+        }
+    }, 500); // Small delay to ensure DOM is ready
+    
+    function initProductTypeChart() {
+        const canvas = document.getElementById('productTypeChart');
+        if (!canvas) {
+            console.error('Product Type Chart canvas not found');
+            return;
+        }
+        
+        // Ensure dimensions
+        if (canvas.width === 0 || canvas.height === 0) {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth || 300;
+            canvas.height = parent.clientHeight || 200;
+        }
+        
+        new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Tablets', 'Capsules', 'Ointments'],
+                datasets: [{
+                    data: [productData.tablets, productData.capsules, productData.ointments],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(75, 192, 192, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        console.log('Product Type Chart initialized');
+    }
+    
+    function initPhaseStatusChart() {
+        const canvas = document.getElementById('phaseStatusChart');
+        if (!canvas) {
+            console.error('Phase Status Chart canvas not found');
+            return;
+        }
+        
+        // Ensure dimensions
+        if (canvas.width === 0 || canvas.height === 0) {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth || 300;
+            canvas.height = parent.clientHeight || 200;
+        }
+        
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Mixing', 'Drying', 'Granulation', 'Compression', 'Packing'],
+                datasets: [{
+                    label: 'Completed',
+                    data: [
+                        phaseData.mixing_completed,
+                        phaseData.drying_completed,
+                        phaseData.granulation_completed,
+                        phaseData.compression_completed,
+                        phaseData.packing_completed
+                    ],
+                    backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                }, {
+                    label: 'In Progress',
+                    data: [
+                        phaseData.mixing_inprogress,
+                        phaseData.drying_inprogress,
+                        phaseData.granulation_inprogress,
+                        phaseData.compression_inprogress,
+                        phaseData.packing_inprogress
+                    ],
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        console.log('Phase Status Chart initialized');
+    }
+    
+    function initWeeklyTrendChart() {
+        const canvas = document.getElementById('weeklyTrendChart');
+        if (!canvas) {
+            console.error('Weekly Trend Chart canvas not found');
+            return;
+        }
+        
+        // Ensure dimensions
+        if (canvas.width === 0 || canvas.height === 0) {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth || 300;
+            canvas.height = parent.clientHeight || 200;
+        }
+        
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Batches Started',
+                    data: [
+                        weeklyData.started_week1,
+                        weeklyData.started_week2,
+                        weeklyData.started_week3,
+                        weeklyData.started_week4
+                    ],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    fill: true
+                }, {
+                    label: 'Batches Completed',
+                    data: [
+                        weeklyData.completed_week1,
+                        weeklyData.completed_week2,
+                        weeklyData.completed_week3,
+                        weeklyData.completed_week4
+                    ],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        console.log('Weekly Trend Chart initialized');
+    }
+    
+    function initQcStatusChart() {
+        const canvas = document.getElementById('qcStatusChart');
+        if (!canvas) {
+            console.error('QC Status Chart canvas not found');
+            return;
+        }
+        
+        // Ensure dimensions
+        if (canvas.width === 0 || canvas.height === 0) {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth || 300;
+            canvas.height = parent.clientHeight || 200;
+        }
+        
+        new Chart(canvas.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: ['Passed', 'Failed', 'Pending'],
+                datasets: [{
+                    data: [
+                        qcData.passed,
+                        qcData.failed,
+                        qcData.pending
+                    ],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 205, 86, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        console.log('QC Status Chart initialized');
+    }
+});
+</script>
+<style>
+    /* Main layout */
+    .dashboard-container {
+        display: flex;
+        min-height: calc(100vh - 56px);
+    }
+    
+    .sidebar {
+        width: 280px;
+        background: #1a365d; /* Deep blue color */
+        padding: 20px 0;
+        color: white;
+        position: fixed;
+        top: 56px; /* Account for navbar height */
+        left: 0;
+        height: calc(100vh - 56px);
+        overflow-y: auto;
+        z-index: 1030; /* Higher z-index to ensure it stays on top */
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .content-area {
+        flex: 1;
+        margin-left: 280px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 992px) {
+        .sidebar {
+            transform: translateX(-100%);
+            position: fixed;
+            z-index: 1000;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .content-area {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .toggle-sidebar {
+            display: block !important;
+        }
+    }
+    
+    .toggle-sidebar {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #3498db;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 1001;
+    }
+    
+    /* Chart styles */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    
+    /* Ensure charts are visible even when empty */
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block !important;
+    }
+    
+    /* Debug outline for chart containers */
+    .chart-container {
+        border: 2px solid #3498db;
+    }
+    
+    /* Sidebar elements */
+    .sidebar-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 15px;
+    }
+    
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sidebar-menu li {
+        margin: 5px 0;
+    }
+    
+    .sidebar-menu a {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        padding: 12px 20px;
+        display: block;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .sidebar-menu a:hover, 
+    .sidebar-menu a.active {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left: 3px solid white;
+    }
+    
+    .sidebar-menu i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .sidebar-section {
+        padding: 10px 20px;
+        margin-top: 20px;
+        color: rgba(255,255,255,0.5);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Cards and components */
+    .card {
+        background: #ffffff;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        color: white;
+        text-align: center;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-normal { background-color: #28a745; }
+    .status-warning { background-color: #ffc107; }
+    .status-critical { background-color: #dc3545; }
+    
+    .section-title {
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Tables and data display */
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .data-table th {
+        background: #f0f4f8;
+        padding: 12px 15px;
+        font-weight: 600;
+        text-align: left;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .data-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    
+    .data-table tbody tr {
+        transition: background-color 0.3s ease;
+    }
+    
+    .data-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Header and dashboard components */
+    .dashboard-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .action-button {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .action-button:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    /* Charts and visualizations */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar with deep blue color -->
+    <div class="sidebar" style="background-color: #1a365d;">
+        <div class="sidebar-header">
+            <h4>KPI Admin</h4>
+        </div>
+        
+        <div class="sidebar-section">Main</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'dashboards:admin_dashboard' %}" class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_timeline' %}">
+                    <i class="fas fa-clock"></i> Timeline
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_fgs_monitor' %}">
+                    <i class="fas fa-boxes"></i> FGS Monitor
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-section">Production</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'bmr:list' %}">
+                    <i class="fas fa-file-medical"></i> BMR Management
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-tasks"></i> Active Phases
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-section">Admin</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="content-area">
+        <!-- Page Header -->
+        <div class="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <p>Kampala Pharmaceutical Industries - Operations Overview</p>
+        </div>
+
+        <!-- Key Metrics Section -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card">
+                    <div class="metric-value">{{ total_bmrs }}</div>
+                    <div class="metric-label">Total BMRs</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card">
+                    <div class="metric-value">{{ active_batches }}</div>
+                    <div class="metric-label">Active Batches</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card">
+                    <div class="metric-value">{{ completed_batches }}</div>
+                    <div class="metric-label">Completed Batches</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card">
+                    <div class="metric-value">{{ rejected_batches }}</div>
+                    <div class="metric-label">Rejected Batches</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Status Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="section-title">Production Status</h3>
+            </div>
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Production by Product Type</h5>
+                        <div class="chart-container">
+                            <canvas id="productTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Phase Completion Status</h5>
+                        <div class="chart-container">
+                            <canvas id="phaseStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="section-title">Advanced Analytics</h3>
+            </div>
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Weekly Production Trend</h5>
+                        <div class="chart-container">
+                            <canvas id="weeklyTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Quality Control Status</h5>
+                        <div class="chart-container">
+                            <canvas id="qcStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Links & System Status -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="section-title">Quick Links & System Status</h3>
+            </div>
+            <div class="col-lg-8 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Quick Access</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'dashboards:admin_timeline' %}" class="btn action-button w-100">
+                                    <i class="fas fa-clock me-2"></i> Timeline
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'dashboards:admin_fgs_monitor' %}" class="btn action-button w-100">
+                                    <i class="fas fa-boxes me-2"></i> FGS Monitor
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'bmr:list' %}" class="btn action-button w-100">
+                                    <i class="fas fa-file-medical me-2"></i> BMR List
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'bmr:create' %}" class="btn action-button w-100">
+                                    <i class="fas fa-plus me-2"></i> New BMR
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="#" class="btn action-button w-100">
+                                    <i class="fas fa-tasks me-2"></i> Active Phases
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'admin:index' %}" class="btn action-button w-100">
+                                    <i class="fas fa-cog me-2"></i> Admin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">System Status</h5>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <td>Database</td>
+                                    <td><span class="status-indicator status-normal"></span> Connected</td>
+                                </tr>
+                                <tr>
+                                    <td>Active Users</td>
+                                    <td><span class="status-indicator status-normal"></span> {{ active_users_count }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Background Tasks</td>
+                                    <td><span class="status-indicator status-normal"></span> Running</td>
+                                </tr>
+                                <tr>
+                                    <td>Last Backup</td>
+                                    <td><span class="status-indicator status-normal"></span> Today 3:00 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity Section -->
+        <div class="row">
+            <div class="col-12">
+                <h3 class="section-title">Recent Activity</h3>
+            </div>
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Batch</th>
+                                        <th>Action</th>
+                                        <th>User</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for bmr in recent_bmrs %}
+                                    <tr>
+                                        <td>{{ bmr.created_date|date:"M d, Y H:i" }}</td>
+                                        <td>{{ bmr.batch_number }}</td>
+                                        <td>BMR Created</td>
+                                        <td>{{ bmr.created_by.get_full_name }}</td>
+                                        <td>
+                                            <span class="status-indicator status-normal"></span>
+                                            {{ bmr.status|title }}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No recent activity</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- CHARTS ONLY - DROPDOWN HANDLED BY BASE TEMPLATE -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard script loaded');
+
+    // Initialize Product Type Chart
+    const productTypeCtx = document.getElementById('productTypeChart');
+    if (productTypeCtx) {
+        new Chart(productTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tablets', 'Capsules', 'Ointments', 'Liquids'],
+                datasets: [{
+                    data: [8, 3, 2, 0],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Phase Status Chart
+    const phaseStatusCtx = document.getElementById('phaseStatusChart');
+    if (phaseStatusCtx) {
+        new Chart(phaseStatusCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mixing', 'Drying', 'Granulation', 'Compression', 'Packing'],
+                datasets: [{
+                    label: 'Completed',
+                    data: [55, 33, 89, 134, 177],
+                    backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                }, {
+                    label: 'In Progress',
+                    data: [32, 11, 55, 72, 91],
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Weekly Trend Chart
+    const weeklyTrendCtx = document.getElementById('weeklyTrendChart');
+    if (weeklyTrendCtx) {
+        new Chart(weeklyTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Started',
+                    data: [4, 6, 8, 7],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Completed',
+                    data: [2, 4, 6, 5],
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize QC Status Chart
+    const qcStatusCtx = document.getElementById('qcStatusChart');
+    if (qcStatusCtx) {
+        new Chart(qcStatusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Passed', 'Failed', 'Pending'],
+                datasets: [{
+                    data: [127, 5, 78],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(255, 193, 7, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    User Profile
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Personal Information</h6>
+                        <p><strong>Username:</strong> {{ user.username }}</p>
+                        <p><strong>Full Name:</strong> {{ user.get_full_name|default:"Not set" }}</p>
+                        <p><strong>Email:</strong> {{ user.email|default:"Not set" }}</p>
+                        <p><strong>Phone:</strong> {{ user.phone_number|default:"Not set" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Work Information</h6>
+                        <p><strong>Role:</strong> 
+                            <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                        </p>
+                        <p><strong>Employee ID:</strong> {{ user.employee_id|default:"Not set" }}</p>
+                        <p><strong>Department:</strong> {{ user.department|default:"Not set" }}</p>
+                        <p><strong>Status:</strong> 
+                            {% if user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Account Details</h6>
+                        <p><strong>Last Login:</strong> {{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</p>
+                        <p><strong>Date Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Permissions</h6>
+                        <p><strong>Staff Status:</strong> 
+                            {% if user.is_staff %}
+                                <span class="badge bg-warning">Staff</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Regular User</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Operator Status:</strong> 
+                            {% if user.is_active_operator %}
+                                <span class="badge bg-success">Active Operator</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'home' %}" class="btn btn-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Go to Dashboard
+                    </a>
+                    
+                    {% if user.is_staff %}
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cog me-2"></i>
+                        Admin Panel
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {% if user.signature %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-signature me-2"></i>
+                    Digital Signature
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ user.signature.url }}" alt="Signature" class="img-fluid" style="max-height: 100px;">
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

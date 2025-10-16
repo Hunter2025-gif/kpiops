@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Quick Release - {{ inventory.batch_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>
+                        Quick Product Release
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5>Product Information</h5>
+                        <p><strong>Batch Number:</strong> {{ inventory.batch_number }}</p>
+                        <p><strong>Product:</strong> {{ inventory.product.product_name }}</p>
+                        <p><strong>Available Quantity:</strong> {{ inventory.quantity_available }} {{ inventory.unit_of_measure }}</p>
+                        <p><strong>Expiry Date:</strong> {{ inventory.expiry_date }}</p>
+                    </div>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="release_type" class="form-label">Release Type*</label>
+                                <select class="form-select" name="release_type" required>
+                                    {% for value, display in release_type_choices %}
+                                    <option value="{{ value }}">{{ display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="quantity_released" class="form-label">Quantity to Release*</label>
+                                <input type="number" class="form-control" name="quantity_released" 
+                                       max="{{ inventory.quantity_available }}" min="0.01" step="0.01" required>
+                                <small class="text-muted">Max: {{ inventory.quantity_available }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="release_reference" class="form-label">Reference Number*</label>
+                            <input type="text" class="form-control" name="release_reference" 
+                                   placeholder="Invoice/DO/Transfer number" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="customer_name" class="form-label">Customer/Recipient</label>
+                                <input type="text" class="form-control" name="customer_name" 
+                                       placeholder="Customer or recipient name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="customer_contact" class="form-label">Contact Information</label>
+                                <input type="text" class="form-control" name="customer_contact" 
+                                       placeholder="Phone or email">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="unit_price" class="form-label">Unit Price (Optional)</label>
+                            <input type="number" class="form-control" name="unit_price" 
+                                   step="0.01" placeholder="Price per unit">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3" 
+                                     placeholder="Additional notes or comments"></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dashboards:finished_goods_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Process Release
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Releases - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>Product Releases
+                    </h2>
+                    <p class="text-muted mb-0">Track all product releases from FGS</p>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'dashboards:finished_goods_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.total_releases }}</h5>
+                            <p class="card-text">Total Releases</p>
+                        </div>
+                        <i class="fas fa-shipping-fast fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.sales_count }}</h5>
+                            <p class="card-text">Sales</p>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.transfers_count }}</h5>
+                            <p class="card-text">Transfers</p>
+                        </div>
+                        <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">${{ stats.total_value|floatformat:0 }}</h5>
+                            <p class="card-text">Total Value</p>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="release_type" class="form-label">Release Type</label>
+                            <select class="form-select" name="release_type" id="release_type">
+                                <option value="">All Types</option>
+                                <option value="sale" {% if request.GET.release_type == 'sale' %}selected{% endif %}>Sale</option>
+                                <option value="transfer" {% if request.GET.release_type == 'transfer' %}selected{% endif %}>Transfer</option>
+                                <option value="donation" {% if request.GET.release_type == 'donation' %}selected{% endif %}>Donation</option>
+                                <option value="return" {% if request.GET.release_type == 'return' %}selected{% endif %}>Return</option>
+                                <option value="destruction" {% if request.GET.release_type == 'destruction' %}selected{% endif %}>Destruction</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="product" class="form-label">Product</label>
+                            <input type="text" class="form-control" name="product" id="product" 
+                                   value="{{ request.GET.product }}" placeholder="Product name">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="batch" class="form-label">Batch Number</label>
+                            <input type="text" class="form-control" name="batch" id="batch" 
+                                   value="{{ request.GET.batch }}" placeholder="Batch number">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">Date From</label>
+                            <input type="date" class="form-control" name="date_from" id="date_from" 
+                                   value="{{ request.GET.date_from }}">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>Filter
+                            </button>
+                            <a href="{% url 'fgs_management:release_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Releases Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Release Records
+                        <span class="badge bg-secondary ms-2">{{ releases.count }} records</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if releases %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Release Date</th>
+                                        <th>Reference</th>
+                                        <th>Product</th>
+                                        <th>Batch</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Customer/Recipient</th>
+                                        <th>Value</th>
+                                        <th>Authorized By</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for release in releases %}
+                                    <tr>
+                                        <td>{{ release.release_date|date:"M d, Y H:i" }}</td>
+                                        <td><strong>{{ release.release_reference }}</strong></td>
+                                        <td>{{ release.inventory.product.product_name }}</td>
+                                        <td>{{ release.inventory.batch_number }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if release.release_type == 'sale' %}success{% elif release.release_type == 'transfer' %}info{% elif release.release_type == 'donation' %}warning{% elif release.release_type == 'return' %}secondary{% else %}danger{% endif %}">
+                                                {{ release.get_release_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ release.quantity_released }} {{ release.inventory.unit_of_measure }}</td>
+                                        <td>
+                                            {% if release.customer_name %}
+                                                {{ release.customer_name }}
+                                                {% if release.customer_contact %}
+                                                    <br><small class="text-muted">{{ release.customer_contact }}</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if release.total_value %}
+                                                ${{ release.total_value|floatformat:2 }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if release.authorized_by %}
+                                                {{ release.authorized_by.get_full_name|default:release.authorized_by.username }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="showReleaseDetails({{ release.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                        <nav aria-label="Releases pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-shipping-fast fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Releases Found</h5>
+                            <p class="text-muted">No product releases match your search criteria.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Release Details Modal -->
+<div class="modal fade" id="releaseDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Release Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="releaseDetailsContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showReleaseDetails(releaseId) {
+    const modal = new bootstrap.Modal(document.getElementById('releaseDetailsModal'));
+    const content = document.getElementById('releaseDetailsContent');
+    
+    // Show loading spinner
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Fetch release details (you can implement this endpoint later)
+    fetch(`/fgs/release-details/${releaseId}/`)
+        .then(response => response.json())
+        .then(data => {
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Release Information</h6>
+                        <p><strong>Reference:</strong> ${data.release_reference}</p>
+                        <p><strong>Type:</strong> ${data.release_type}</p>
+                        <p><strong>Date:</strong> ${data.release_date}</p>
+                        <p><strong>Quantity:</strong> ${data.quantity_released} ${data.unit_of_measure}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Product Information</h6>
+                        <p><strong>Product:</strong> ${data.product_name}</p>
+                        <p><strong>Batch:</strong> ${data.batch_number}</p>
+                        <p><strong>Customer:</strong> ${data.customer_name || 'N/A'}</p>
+                        <p><strong>Contact:</strong> ${data.customer_contact || 'N/A'}</p>
+                    </div>
+                </div>
+                ${data.notes ? `<div class="row"><div class="col-12"><h6>Notes</h6><p>${data.notes}</p></div></div>` : ''}
+            `;
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading release details. Please try again.
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %}

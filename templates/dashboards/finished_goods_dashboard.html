@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+
+{% block title %}Finished Goods Store Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+<!-- Hidden CSRF token for JavaScript -->
+<form style="display: none;">
+    {% csrf_token %}
+</form>
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-archive me-2"></i>Finished Goods Store Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">Finished Goods Storage Management</p>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">Welcome, {{ user.get_full_name|default:user.username }}</small><br>
+                    <small class="text-success">{{ user.get_role_display }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <a href="?detail=pending" class="text-decoration-none">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.pending_phases }}</h5>
+                                <p class="card-text">Pending Storage</p>
+                            </div>
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?detail=in_progress" class="text-decoration-none">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.in_progress_phases }}</h5>
+                                <p class="card-text">In Storage</p>
+                            </div>
+                            <i class="fas fa-play fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?detail=completed_today" class="text-decoration-none">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.completed_today }}</h5>
+                                <p class="card-text">Stored Today</p>
+                            </div>
+                            <i class="fas fa-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?detail=total_batches" class="text-decoration-none">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.total_batches }}</h5>
+                                <p class="card-text">Total Batches</p>
+                            </div>
+                            <i class="fas fa-warehouse fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Inventory Management Statistics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="text-muted mb-3">
+                <i class="fas fa-boxes me-2"></i>Inventory Management
+            </h5>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h4 class="text-success mb-0">{{ stats.total_inventory_items }}</h4>
+                    <small class="text-muted">Total Items</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h4 class="text-primary mb-0">{{ stats.available_for_sale }}</h4>
+                    <small class="text-muted">Available for Sale</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h4 class="text-success mb-0">{{ stats.recent_releases }}</h4>
+                    <small class="text-muted">Recent Releases</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h4 class="text-info mb-0">{{ stats.active_alerts }}</h4>
+                    <small class="text-muted">Active Alerts</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Finished Goods Storage Queue -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        {% if detail_title %}{{ detail_title }}{% else %}Finished Goods Storage Queue{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if my_phases %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Batch #</th>
+                                        <th>Product</th>
+                                        <th>Phase</th>
+                                        <th>Status</th>
+                                        <th>Started</th>
+                                        <th>Priority</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for phase in my_phases %}
+                                    <tr>
+                                        <td><strong>{{ phase.bmr.batch_number }}</strong></td>
+                                        <td>{{ phase.bmr.product.product_name }}</td>
+                                        <td><span class="badge bg-primary">{{ phase.display_name|default:phase.phase.phase_name|title }}</span></td>
+                                        <td>
+                                            {% if phase.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif phase.status == 'in_progress' %}
+                                                <span class="badge bg-info">In Storage</span>
+                                            {% elif phase.status == 'completed' %}
+                                                <span class="badge bg-success">Stored</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ phase.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if phase.started_date %}
+                                                {{ phase.started_date|date:"M d, H:i" }}
+                                            {% else %}
+                                                <span class="text-muted">Not started</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">Normal</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'bmr:detail' phase.bmr.pk %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                                {% if phase.status == 'pending' %}
+                                                <button class="btn btn-outline-success btn-sm" onclick="startStorage('{{ phase.bmr.pk }}')">
+                                                    <i class="fas fa-play"></i> Start
+                                                </button>
+                                                {% elif phase.status == 'in_progress' %}
+                                                <button class="btn btn-outline-success btn-sm" onclick="completeStorage('{{ phase.bmr.pk }}')">
+                                                    <i class="fas fa-check"></i> Store
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-5">
+                                            <i class="fas fa-archive fa-3x text-muted mb-3"></i><br>
+                                            No finished goods pending storage at the moment.<br>
+                                            <small>Check back later for new storage requests.</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted py-5">
+                            <i class="fas fa-archive fa-3x text-muted mb-3"></i><br>
+                            No finished goods pending storage at the moment.<br>
+                            <small>Check back later for new storage requests.</small>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inventory Management Sections -->
+<div class="row">
+    <!-- Available Inventory for Release -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-boxes me-2"></i>Available for Release
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if available_inventory %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Batch</th>
+                                    <th>Product</th>
+                                    <th>Available</th>
+                                    <th>Expiry</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in available_inventory %}
+                                <tr>
+                                    <td><strong>{{ item.batch_number }}</strong></td>
+                                    <td>{{ item.product.product_name }}</td>
+                                    <td>{{ item.quantity_available }} {{ item.unit_of_measure }}</td>
+                                    <td>
+                                        {% if item.days_until_expiry < 30 %}
+                                            <span class="badge bg-warning">{{ item.days_until_expiry }} days</span>
+                                        {% elif item.days_until_expiry < 0 %}
+                                            <span class="badge bg-danger">Expired</span>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ item.days_until_expiry }} days</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" onclick="quickRelease({{ item.id }}, '{{ item.batch_number }}', '{{ item.product.product_name }}', {{ item.quantity_available }})">
+                                            <i class="fas fa-shipping-fast me-1"></i>Release
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No products available for release</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed FGS Phases - Create Inventory -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Ready for Inventory
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if completed_fgs_phases %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Batch</th>
+                                    <th>Product</th>
+                                    <th>Completed</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for phase in completed_fgs_phases %}
+                                <tr>
+                                    <td><strong>{{ phase.bmr.batch_number }}</strong></td>
+                                    <td>{{ phase.bmr.product.product_name }}</td>
+                                    <td>{{ phase.completed_date|date:"M d" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success" onclick="createInventory({{ phase.id }}, '{{ phase.bmr.batch_number }}')">
+                                            <i class="fas fa-plus me-1"></i>Add to Inventory
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">All completed batches are in inventory</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Inventory and Releases -->
+<div class="row">
+    <!-- Recent Inventory -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Recent Inventory Additions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_inventory %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Batch</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                    <th>Added</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in recent_inventory %}
+                                <tr>
+                                    <td><strong>{{ item.batch_number }}</strong></td>
+                                    <td>{{ item.product.product_name }}</td>
+                                    <td>{{ item.quantity_available }} {{ item.unit_of_measure }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if item.status == 'available' %}bg-success
+                                            {% elif item.status == 'stored' %}bg-primary
+                                            {% elif item.status == 'expired' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ item.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.storage_date|date:"M d" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="/fgs/inventory/" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View All Inventory
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No recent inventory additions</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Releases -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shipping-fast me-2"></i>Recent Product Releases
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_releases %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for release in recent_releases %}
+                                <tr>
+                                    <td><strong>{{ release.release_reference }}</strong></td>
+                                    <td>{{ release.inventory.product.product_name }}</td>
+                                    <td>{{ release.quantity_released }} units</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if release.release_type == 'sale' %}bg-success
+                                            {% elif release.release_type == 'transfer' %}bg-info
+                                            {% elif release.release_type == 'donation' %}bg-warning
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ release.get_release_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ release.release_date|date:"M d" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center">
+                        <a href="/fgs/releases/" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View All Releases
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-truck fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No recent product releases</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Alerts -->
+{% if active_alerts %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Active Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for alert in active_alerts %}
+                <div class="alert alert-{% if alert.priority == 'critical' %}danger{% elif alert.priority == 'high' %}warning{% else %}info{% endif %} mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ alert.title }}</strong>
+                            <p class="mb-1">{{ alert.message }}</p>
+                            {% if alert.inventory %}
+                            <small class="text-muted">
+                                Related: {{ alert.inventory.batch_number }} - {{ alert.inventory.product.product_name }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-dark">{{ alert.get_priority_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function startStorage(bmrId) {
+    if (confirm('Start finished goods storage for this BMR?')) {
+        window.location.href = `/bmr/${bmrId}/start-phase/finished_goods_store/`;
+    }
+}
+
+function completeStorage(bmrId) {
+    const locationInput = prompt('Enter storage location (e.g., "Main Warehouse Section A", "Cold Storage"):');
+    if (locationInput !== null) {
+        window.location.href = `/bmr/${bmrId}/complete-phase/finished_goods_store/?comments=${encodeURIComponent(locationInput)}`;
+    }
+}
+
+function createInventory(phaseId, batchNumber) {
+    if (confirm(`Create inventory entry for batch ${batchNumber}?`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = `/fgs/create-inventory/${phaseId}/`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function quickRelease(inventoryId, batchNumber, productName, availableQty) {
+    // Get CSRF token
+    const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
+    
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page and try again.');
+        return;
+    }
+    
+    // Create modal for quick release
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div class="modal fade" id="releaseModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Release Product - ${batchNumber}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="/fgs/quick-release/${inventoryId}/">
+                        <div class="modal-body">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Product: <strong>${productName}</strong></label>
+                                <p class="text-muted">Available: ${availableQty} units</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="release_type" class="form-label">Release Type</label>
+                                <select class="form-select" name="release_type" required>
+                                    <option value="sale">Sale</option>
+                                    <option value="transfer">Transfer</option>
+                                    <option value="donation">Donation</option>
+                                    <option value="return">Return</option>
+                                    <option value="destruction">Destruction</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="quantity_released" class="form-label">Quantity to Release</label>
+                                <input type="number" class="form-control" name="quantity_released" 
+                                       max="${availableQty}" min="1" step="0.01" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="release_reference" class="form-label">Reference Number</label>
+                                <input type="text" class="form-control" name="release_reference" 
+                                       placeholder="Invoice/DO/Transfer number" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="customer_name" class="form-label">Customer/Recipient</label>
+                                <input type="text" class="form-control" name="customer_name" 
+                                       placeholder="Customer or recipient name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="customer_contact" class="form-label">Contact Information</label>
+                                <input type="text" class="form-control" name="customer_contact" 
+                                       placeholder="Phone or email">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="unit_price" class="form-label">Unit Price (Optional)</label>
+                                <input type="number" class="form-control" name="unit_price" 
+                                       step="0.01" placeholder="Price per unit">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" name="notes" rows="2" 
+                                         placeholder="Additional notes or comments"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-shipping-fast me-1"></i>Process Release
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bootstrapModal = new bootstrap.Modal(document.getElementById('releaseModal'));
+    bootstrapModal.show();
+    
+    // Remove modal when hidden
+    document.getElementById('releaseModal').addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modal);
+    });
+}
+</script>
+{% endblock %}

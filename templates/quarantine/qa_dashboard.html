@@ -1,0 +1,205 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}QA Quarantine Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">QA Quarantine Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:dashboard_home' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quarantine:dashboard' %}">Quarantine</a></li>
+        <li class="breadcrumb-item active">QA Processing</li>
+    </ol>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Pending Samples</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ pending_samples_count }}</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Processed Today</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ processed_today_count }}</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Avg Processing Time</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ avg_processing_time }}h</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-chart-bar fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Sample Requests -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-hourglass-half me-1"></i>
+            Pending Sample Requests
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="pendingSamplesTable">
+                    <thead>
+                        <tr>
+                            <th>Priority</th>
+                            <th>Product Name</th>
+                            <th>Batch Number</th>
+                            <th>Sample #</th>
+                            <th>Requested</th>
+                            <th>Wait Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sample in pending_samples %}
+                        <tr class="{% if sample.is_urgent %}table-warning{% endif %}">
+                            <td>
+                                {% if sample.is_urgent %}
+                                    <span class="badge bg-danger">URGENT</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Normal</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sample.quarantine_batch.bmr.product.product_name }}</td>
+                            <td>{{ sample.quarantine_batch.bmr.batch_number }}</td>
+                            <td>{{ sample.sample_number }}</td>
+                            <td>{{ sample.request_date|date:"M d, H:i" }}</td>
+                            <td>{{ sample.wait_time_hours }}h</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" 
+                                        onclick="processSample({{ sample.id }})"
+                                        title="Process Sample">
+                                    <i class="fas fa-flask"></i> Process Sample
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No pending sample requests</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processed Samples Today -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-check-circle me-1"></i>
+            Samples Processed Today
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Batch Number</th>
+                            <th>Sample #</th>
+                            <th>Processed At</th>
+                            <th>QC Status</th>
+                            <th>Processing Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sample in processed_today %}
+                        <tr>
+                            <td>{{ sample.quarantine_batch.bmr.product.product_name }}</td>
+                            <td>{{ sample.quarantine_batch.bmr.batch_number }}</td>
+                            <td>{{ sample.sample_number }}</td>
+                            <td>{{ sample.sample_date|date:"H:i" }}</td>
+                            <td>
+                                {% if sample.qc_status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif sample.qc_status == 'failed' %}
+                                    <span class="badge bg-danger">Failed</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Pending QC</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sample.qa_processing_time_hours }}h</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No samples processed today</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Actions -->
+<script>
+function processSample(sampleId) {
+    if (confirm('Are you sure you want to process this sample and send it to QC?')) {
+        fetch(`/quarantine/qa/process-sample/${sampleId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while processing the sample.');
+        });
+    }
+}
+
+// Add CSRF token to all requests
+document.addEventListener('DOMContentLoaded', function() {
+    // Create CSRF token input if it doesn't exist
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+});
+</script>
+{% endblock %}

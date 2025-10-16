@@ -1,0 +1,340 @@
+/* Dashboard Color Standardization - Blue Theme */
+/* Force all purple gradients to use blue */
+
+/* Main color palette - Light Blue from screenshot */
+:root {
+    --primary-blue: #007bff;
+    --light-blue: #007bff;
+    --lighter-blue: #0056b3;
+    --text-blue: #007bff;
+    --border-blue: #007bff;
+}
+
+/* Override Bootstrap primary color */
+.bg-primary {
+    background-color: var(--primary-blue) !important;
+    background: linear-gradient(135deg, var(--light-blue) 0%, var(--lighter-blue) 100%) !important;
+}
+
+/* Override all purple gradients globally */
+*[style*="#667eea"], *[style*="#764ba2"],
+.sidebar, .stats-card, .timeline-stat, .dashboard-header {
+    background: linear-gradient(135deg, var(--light-blue) 0%, var(--lighter-blue) 100%) !important;
+}
+
+/* Specific overrides for inline styles */
+div[style*="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"] {
+    background: linear-gradient(135deg, var(--light-blue) 0%, var(--lighter-blue) 100%) !important;
+}
+
+*[style*="border-color: #667eea"] {
+    border-color: var(--border-blue) !important;
+}
+
+*[style*="border-left: 4px solid #667eea"] {
+    border-left: 4px solid var(--border-blue) !important;
+}
+
+*[style*="border-top: 3px solid #667eea"] {
+    border-top: 3px solid var(--border-blue) !important;
+}
+
+*[style*="color: #667eea"] {
+    color: var(--text-blue) !important;
+}
+
+*[style*="background: #764ba2"] {
+    background: var(--lighter-blue) !important;
+}
+
+/* Card styling */
+.card-header.bg-primary {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Badge styling */
+.badge-primary {
+    background-color: var(--primary-blue) !important;
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: var(--primary-blue) !important;
+    border-color: var(--primary-blue) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--lighter-blue) !important;
+    border-color: var(--lighter-blue) !important;
+}
+
+/* Text and border colors */
+.text-primary {
+    color: var(--text-blue) !important;
+}
+
+.border-primary {
+    border-color: var(--border-blue) !important;
+}
+
+/* Table styling */
+.table-primary {
+    background-color: rgba(0, 86, 179, 0.1) !important;
+}
+
+/* Alert styling */
+.alert-primary {
+    background-color: rgba(0, 86, 179, 0.1) !important;
+    border-color: var(--primary-blue) !important;
+    color: var(--text-blue) !important;
+}
+
+/* High contrast for text readability */
+.bg-primary,
+.sidebar,
+.stats-card,
+.timeline-stat {
+    color: white !important;
+}
+
+.bg-primary .card-title,
+.sidebar .nav-link,
+.stats-card .stat-value,
+.timeline-stat .stat-label {
+    color: white !important;
+}
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%) !important;
+}
+
+.card-header.bg-success {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%) !important;
+    border: none;
+    box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+}
+
+/* Enhanced warning color - make it more vibrant */
+.bg-warning {
+    background-color: #ffc107 !important;
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%) !important;
+    color: #000 !important;
+}
+
+.card-header.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%) !important;
+    border: none;
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+    color: #000 !important;
+}
+
+/* Enhanced primary card headers with better contrast */
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #6c7ae0 0%, #5a6acb 100%) !important;
+    color: #ffffff !important;
+    border: none;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(108, 122, 224, 0.2);
+}
+
+.card-header.bg-primary h3,
+.card-header.bg-primary h5 {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* Badge enhancements */
+.badge.bg-primary {
+    background: linear-gradient(135deg, #6c7ae0 0%, #5a6acb 100%) !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%) !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%) !important;
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #6c7ae0 0%, #5a6acb 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Card hover effects */
+.card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button enhancements */
+.btn-outline-primary {
+    color: #6c7ae0;
+    border-color: #6c7ae0;
+}
+
+.btn-outline-primary:hover {
+    background-color: #6c7ae0;
+    border-color: #6c7ae0;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(108, 122, 224, 0.2);
+}
+
+/* Table enhancements */
+.table-striped > tbody > tr:nth-of-type(odd) > td {
+    background-color: rgba(108, 122, 224, 0.05);
+}
+
+.table-hover > tbody > tr:hover > td {
+    background-color: rgba(108, 122, 224, 0.1);
+}
+
+/* Navbar enhancement */
+.navbar {
+    background: linear-gradient(135deg, #6c7ae0 0%, #5a6acb 100%) !important;
+    box-shadow: 0 2px 4px rgba(108, 122, 224, 0.2);
+}
+
+/* Form control enhancements */
+.form-control:focus {
+    border-color: #6c7ae0;
+    box-shadow: 0 0 0 0.2rem rgba(108, 122, 224, 0.25);
+}
+
+.form-select:focus {
+    border-color: #6c7ae0;
+    box-shadow: 0 0 0 0.2rem rgba(108, 122, 224, 0.25);
+}
+
+/* Alert enhancements */
+.alert-primary {
+    background-color: rgba(108, 122, 224, 0.1);
+    border-color: rgba(108, 122, 224, 0.2);
+    color: #3d4bad;
+}
+
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: rgba(25, 135, 84, 0.2);
+    color: #0a3622;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+    color: #664d03;
+}
+
+.alert-info {
+    background-color: rgba(108, 122, 224, 0.1);
+    border-color: rgba(108, 122, 224, 0.2);
+    color: #3d4bad;
+}
+
+/* Dropdown enhancements */
+.dropdown-menu {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item:hover {
+    background-color: rgba(108, 122, 224, 0.1);
+    color: #6c7ae0;
+}
+
+/* Progress bar enhancements */
+/* Progress bar enhancements */
+.progress-bar {
+    background: linear-gradient(135deg, #6c7ae0 0%, #5a6acb 100%);
+}
+
+/* Pagination enhancements */
+.page-link {
+    color: #6c7ae0;
+}
+
+.page-link:hover {
+    color: #5a6acb;
+    background-color: rgba(108, 122, 224, 0.1);
+    border-color: #6c7ae0;
+}
+
+.page-item.active .page-link {
+    background-color: #6c7ae0;
+    border-color: #6c7ae0;
+    background: linear-gradient(135deg, #6c7ae0 0%, #5a6acb 100%);
+}
+
+/* Text color enhancements */
+.text-primary {
+    color: #6c7ae0 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Link enhancements */
+a {
+    color: #6c7ae0;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #5a6acb;
+}
+
+/* Border enhancements */
+.border-primary {
+    border-color: #6c7ae0 !important;
+}
+
+/* Custom enhancement for dashboard cards */
+.dashboard-card {
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 86, 179, 0.15);
+}
+
+/* Status badge enhancements */
+.status-badge {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+}
+
+/* Responsive text adjustments */
+@media (max-width: 768px) {
+    .card-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
+/* Animation for interactive elements */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 86, 179, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 86, 179, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 86, 179, 0); }
+}
+
+.btn-primary:focus {
+    animation: pulse 1.5s infinite;
+}

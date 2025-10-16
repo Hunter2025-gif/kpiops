@@ -1,0 +1,155 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Test{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1>Admin Dashboard Test</h1>
+            
+            <!-- Key Metrics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3>{{ total_bmrs|default:"0" }}</h3>
+                            <p>Total BMRs</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3>{{ active_batches|default:"0" }}</h3>
+                            <p>Active Batches</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3>{{ completed_batches|default:"0" }}</h3>
+                            <p>Completed Batches</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3>{{ rejected_batches|default:"0" }}</h3>
+                            <p>Rejected Batches</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2>BMR Timeline Tracking</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>BMR Number</th>
+                                            <th>Product</th>
+                                            <th>Status</th>
+                                            <th>Created Date</th>
+                                            <th>Current Phase</th>
+                                            <th>Total Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in timeline_data %}
+                                        <tr>
+                                            <td class="batch-number">{{ item.bmr.bmr_number }}</td>
+                                            <td>{{ item.bmr.product.product_name }}</td>
+                                            <td>
+                                                <span class="badge {% if item.is_completed %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {% if item.is_completed %}Completed{% else %}In Progress{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>{{ item.bmr.created_date|date:"M d, Y" }}</td>
+                                            <td>
+                                                {% if item.current_phase %}
+                                                    {{ item.current_phase.phase.phase_name|title }}
+                                                {% else %}
+                                                    Completed
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.total_time_days %}
+                                                    {{ item.total_time_days }} days
+                                                {% else %}
+                                                    In Progress
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">No BMRs found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Phases Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2>Active Phases</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>BMR Number</th>
+                                            <th>Product</th>
+                                            <th>Phase</th>
+                                            <th>Status</th>
+                                            <th>Started Date</th>
+                                            <th>Duration</th>
+                                            <th>Operator</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for phase in active_phases %}
+                                        <tr>
+                                            <td class="batch-number">{{ phase.bmr.bmr_number }}</td>
+                                            <td>{{ phase.bmr.product.product_name }}</td>
+                                            <td>{{ phase.phase.phase_name|title }}</td>
+                                            <td>
+                                                <span class="badge {% if phase.status == 'in_progress' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                    {{ phase.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>{{ phase.started_date|date:"M d, Y H:i" }}</td>
+                                            <td>{{ phase.duration_hours|floatformat:1 }} hours</td>
+                                            <td>{{ phase.started_by.get_full_name|default:"N/A" }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center">No active phases found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

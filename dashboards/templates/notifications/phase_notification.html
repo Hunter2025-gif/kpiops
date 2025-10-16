@@ -1,0 +1,27 @@
+{% load static %}
+
+<!-- Notification Template -->
+{% if notification %}
+<div class="alert alert-{{ notification.type }} alert-dismissible fade show" role="alert">
+    {% if notification.icon %}
+    <i class="{{ notification.icon }} me-2"></i>
+    {% endif %}
+    <strong>{{ notification.title }}</strong>{% if notification.message %}: {{ notification.message }}{% endif %}
+    {% if notification.next_phase %}
+    <br><span class="small text-muted">Next phase: {{ notification.next_phase }}</span>
+    {% endif %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<!-- Systematic Notification Generation -->
+{% if bmr and completed_phase %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fas fa-check-circle me-2"></i>
+    <strong>Completed {{ completed_phase.phase.get_phase_name_display }} phase for BMR {{ bmr.bmr_number }}</strong>
+    {% if next_phase %}
+    <br><span class="small text-muted">Next phase: {{ next_phase.phase.get_phase_name_display }}</span>
+    {% endif %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}

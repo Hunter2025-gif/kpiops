@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}BMR {{ bmr.batch_number }} Comments - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-comments me-2"></i>BMR {{ bmr.batch_number }} - Comments
+                        {% if not is_admin %}
+                            <span class="badge bg-info ms-2">My Access</span>
+                        {% else %}
+                            <span class="badge bg-success ms-2">Admin Access</span>
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {{ bmr.product.product_name }} | Total Comments: {{ total_comments }}
+                        {% if not is_admin %}
+                            | Viewing as: {{ user_role|title }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'reports:comments_report' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i>Back to All Comments
+                    </a>
+                    <a href="{% url 'bmr:detail' bmr.id %}" class="btn btn-primary">
+                        <i class="fas fa-eye me-1"></i>View BMR Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BMR Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>BMR Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>BMR Number:</strong><br>
+                            <span class="text-primary">{{ bmr.batch_number }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Product:</strong><br>
+                            {{ bmr.product.product_name }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Batch Size:</strong><br>
+                            {{ bmr.batch_size|floatformat:0 }} {{ bmr.batch_size_unit }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Status:</strong><br>
+                            <span class="badge 
+                                {% if bmr.status == 'approved' %}bg-success
+                                {% elif bmr.status == 'rejected' %}bg-danger
+                                {% elif bmr.status == 'submitted' %}bg-warning
+                                {% else %}bg-info{% endif %}">
+                                {{ bmr.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Timeline -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-timeline me-2"></i>Comments Timeline
+                        <span class="badge bg-primary ms-2">{{ total_comments }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if comments %}
+                        <div class="timeline">
+                            {% for comment in comments %}
+                            <div class="timeline-item mb-4">
+                                <div class="row">
+                                    <div class="col-md-2 text-end">
+                                        <div class="timeline-date">
+                                            {% if comment.date %}
+                                                <strong>{{ comment.date|date:"M d, Y" }}</strong><br>
+                                                <small class="text-muted">{{ comment.date|time:"H:i" }}</small>
+                                            {% else %}
+                                                <span class="text-muted">Date N/A</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 text-center">
+                                        <div class="timeline-icon">
+                                            <i class="fas 
+                                                {% if 'Rejection' in comment.type %}fa-times-circle text-danger
+                                                {% elif 'QA' in comment.type %}fa-check-circle text-warning
+                                                {% elif 'Signature' in comment.type %}fa-signature text-secondary
+                                                {% else %}fa-comment text-primary{% endif %} fa-2x"></i>
+                                        </div>
+                                        {% if not forloop.last %}
+                                        <div class="timeline-line bg-light" style="height: 80px; width: 2px; margin: 10px auto;"></div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="card">
+                                            <div class="card-header 
+                                                {% if 'Rejection' in comment.type %}bg-danger text-white
+                                                {% elif 'QA' in comment.type %}bg-warning text-dark
+                                                {% elif 'Signature' in comment.type %}bg-secondary text-white
+                                                {% else %}bg-primary text-white{% endif %}">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-0">{{ comment.type }}</h6>
+                                                        <small>{{ comment.phase }}</small>
+                                                    </div>
+                                                    <span class="badge 
+                                                        {% if comment.status == 'completed' %}bg-success
+                                                        {% elif comment.status == 'failed' %}bg-danger
+                                                        {% elif comment.status == 'in_progress' %}bg-warning
+                                                        {% else %}bg-info{% endif %}">
+                                                        {{ comment.status|title }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-2">
+                                                    <strong>User:</strong> {{ comment.user }} 
+                                                    <span class="badge bg-light text-dark ms-2">{{ comment.role }}</span>
+                                                </div>
+                                                <div class="comment-content">
+                                                    <strong>Comments:</strong>
+                                                    <div class="mt-2 p-3 bg-light rounded">
+                                                        {{ comment.content|linebreaks }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Comments Found</h5>
+                            <p class="text-muted">This BMR doesn't have any comments yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    position: relative;
+}
+
+.timeline-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-line {
+    position: relative;
+    z-index: 0;
+}
+
+.comment-content {
+    font-size: 0.95rem;
+}
+
+.timeline-date {
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

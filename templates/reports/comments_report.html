@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+
+{% block title %}Comments Report - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-comments me-2"></i>Comments & Observations Report
+                        {% if not is_admin %}
+                            <span class="badge bg-info ms-2">My Reports</span>
+                        {% else %}
+                            <span class="badge bg-success ms-2">All Reports (Admin)</span>
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {% if not is_admin %}
+                            Your comments from BMRs, phases, and quality control activities
+                        {% else %}
+                            All comments from BMRs, phases, and quality control activities
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'reports:export_comments_word' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-file-word me-1"></i>Export to Word
+                    </a>
+                    <a href="{% url 'reports:export_comments_excel' %}" class="btn btn-success me-2">
+                        <i class="fas fa-file-excel me-1"></i>Export to Excel
+                    </a>
+                    <a href="{% url 'reports:export_comments_csv' %}" class="btn btn-success">
+                        <i class="fas fa-file-csv me-1"></i>Export to CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.total_comments }}</h4>
+                    <small>Total Comments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.bmr_comments }}</h4>
+                    <small>BMR Comments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.phase_comments }}</h4>
+                    <small>Phase Comments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.rejections }}</h4>
+                    <small>Rejections</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h4>{{ stats.signatures }}</h4>
+                    <small>Signatures</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-dark text-white">
+                <div class="card-body text-center">
+                    <h4>{{ bmrs|length }}</h4>
+                    <small>BMRs with Comments</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Comments</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="bmr" class="form-label">BMR Number</label>
+                            <select class="form-select" id="bmr" name="bmr">
+                                <option value="">All BMRs</option>
+                                {% for bmr in bmrs %}
+                                    <option value="{{ bmr }}" {% if current_filters.bmr == bmr %}selected{% endif %}>{{ bmr }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="type" class="form-label">Comment Type</label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="">All Types</option>
+                                {% for comment_type in comment_types %}
+                                    <option value="{{ comment_type }}" {% if current_filters.type == comment_type %}selected{% endif %}>{{ comment_type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="role" class="form-label">User Role</label>
+                            <select class="form-select" id="role" name="role">
+                                <option value="">All Roles</option>
+                                {% for role in user_roles %}
+                                    <option value="{{ role }}" {% if current_filters.role == role %}selected{% endif %}>{{ role }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="fas fa-search me-1"></i>Filter
+                                </button>
+                                <a href="{% url 'reports:comments_report' %}" class="btn btn-outline-secondary flex-fill">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Comments
+                        <span class="badge bg-primary ms-2">{{ total_comments }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if comments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>BMR</th>
+                                        <th>Product</th>
+                                        <th>Phase</th>
+                                        <th>User</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Comments</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for comment in comments %}
+                                    <tr>
+                                        <td>
+                                            {% if comment.date %}
+                                                {{ comment.date|date:"M d, Y" }}<br>
+                                                <small class="text-muted">{{ comment.date|time:"H:i" }}</small>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong class="text-primary">{{ comment.bmr_number }}</strong>
+                                        </td>
+                                        <td>{{ comment.product }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ comment.phase }}</span>
+                                        </td>
+                                        <td>
+                                            {{ comment.user }}<br>
+                                            <small class="text-muted">{{ comment.user_role }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if 'Rejection' in comment.comment_type %}bg-danger
+                                                {% elif 'QA' in comment.comment_type %}bg-warning
+                                                {% elif 'Signature' in comment.comment_type %}bg-secondary
+                                                {% else %}bg-success{% endif %}">
+                                                {{ comment.comment_type }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if comment.status == 'completed' %}bg-success
+                                                {% elif comment.status == 'failed' %}bg-danger
+                                                {% elif comment.status == 'in_progress' %}bg-warning
+                                                {% else %}bg-info{% endif %}">
+                                                {{ comment.status|title }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="comment-text" style="max-width: 300px;">
+                                                {% if comment.comments|length > 100 %}
+                                                    <span class="comment-short">{{ comment.comments|truncatechars:100 }}</span>
+                                                    <span class="comment-full" style="display: none;">{{ comment.comments }}</span>
+                                                    <br><a href="#" class="text-primary show-more" onclick="toggleComment(this); return false;">Show More</a>
+                                                {% else %}
+                                                    {{ comment.comments }}
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'bmr:detail' comment.bmr_id %}" 
+                                                   class="btn btn-outline-primary" 
+                                                   title="View BMR">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if comment.bmr_id %}
+                                                <a href="{% url 'reports:bmr_comments_detail' comment.bmr_id %}" 
+                                                   class="btn btn-outline-info" 
+                                                   title="All BMR Comments">
+                                                    <i class="fas fa-comments"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if total_comments > 100 %}
+                                                </table>
+                        
+                        <!-- Pagination controls -->
+                        <div class="d-flex justify-content-center mt-4">
+                            <nav aria-label="Comments pagination">
+                                <ul class="pagination">
+                                    {% if comments.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% if current_filters.bmr %}&bmr={{ current_filters.bmr }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.role %}&role={{ current_filters.role }}{% endif %}" aria-label="First">
+                                                <span aria-hidden="true">&laquo;&laquo;</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ comments.previous_page_number }}{% if current_filters.bmr %}&bmr={{ current_filters.bmr }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.role %}&role={{ current_filters.role }}{% endif %}" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" aria-label="First">
+                                                <span aria-hidden="true">&laquo;&laquo;</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% with ''|center:comments.paginator.num_pages as range %}
+                                        {% for _ in range %}
+                                            {% with forloop.counter as i %}
+                                                {% if comments.paginator.num_pages <= 10 or i == comments.number or i == 1 or i == comments.paginator.num_pages or i == comments.number|add:"-1" or i == comments.number|add:"1" or i == comments.number|add:"-2" or i == comments.number|add:"2" %}
+                                                    <li class="page-item {% if i == comments.number %}active{% endif %}">
+                                                        <a class="page-link" href="?page={{ i }}{% if current_filters.bmr %}&bmr={{ current_filters.bmr }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.role %}&role={{ current_filters.role }}{% endif %}">{{ i }}</a>
+                                                    </li>
+                                                {% elif i == comments.number|add:"-3" or i == comments.number|add:"3" %}
+                                                    <li class="page-item disabled">
+                                                        <a class="page-link" href="#">...</a>
+                                                    </li>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                    
+                                    {% if comments.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ comments.next_page_number }}{% if current_filters.bmr %}&bmr={{ current_filters.bmr }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.role %}&role={{ current_filters.role }}{% endif %}" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ comments.paginator.num_pages }}{% if current_filters.bmr %}&bmr={{ current_filters.bmr }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.role %}&role={{ current_filters.role }}{% endif %}" aria-label="Last">
+                                                <span aria-hidden="true">&raquo;&raquo;</span>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" aria-label="Last">
+                                                <span aria-hidden="true">&raquo;&raquo;</span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        
+                        <!-- Pagination info -->
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Showing page {{ comments.number }} of {{ comments.paginator.num_pages }} ({{ total_comments }} total comments).
+                            {% if not is_admin %}
+                                <br><strong>Note:</strong> You are viewing only your own comments and BMRs you were involved in.
+                            {% endif %}
+                        </div>
+                        {% elif not is_admin %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> You are viewing only your own comments and BMRs you were involved in. 
+                            Contact an administrator to view all system comments.
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Comments Found</h5>
+                            <p class="text-muted">
+                                {% if current_filters.bmr or current_filters.type or current_filters.role %}
+                                    No comments match your current filters. Try adjusting or clearing the filters.
+                                {% else %}
+                                    No comments have been added to the system yet.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleComment(link) {
+    const parentDiv = link.parentElement;
+    const shortSpan = parentDiv.querySelector('.comment-short');
+    const fullSpan = parentDiv.querySelector('.comment-full');
+    
+    if (fullSpan.style.display === 'none') {
+        shortSpan.style.display = 'none';
+        fullSpan.style.display = 'inline';
+        link.textContent = 'Show Less';
+    } else {
+        shortSpan.style.display = 'inline';
+        fullSpan.style.display = 'none';
+        link.textContent = 'Show More';
+    }
+}
+</script>
+{% endblock %}

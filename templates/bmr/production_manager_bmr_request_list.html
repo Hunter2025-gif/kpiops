@@ -1,0 +1,111 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}BMR Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">BMR Requests</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:production_manager_dashboard' %}">Production Manager Dashboard</a></li>
+        <li class="breadcrumb-item active">BMR Requests</li>
+    </ol>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0">Your BMR Requests</h4>
+            <p class="text-muted">Track the status of your BMR requests to QA Department</p>
+        </div>
+        <a href="{% url 'bmr:create_bmr_request' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Request New BMR
+        </a>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-list me-1"></i>
+            All BMR Requests
+        </div>
+        <div class="card-body">
+            {% if bmr_requests %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="bmrRequestsTable">
+                        <thead>
+                            <tr>
+                                <th>Request Date</th>
+                                <th>Product</th>
+                                <th>Required Date</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>BMR</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in bmr_requests %}
+                                <tr>
+                                    <td>{{ request.request_date|date:"M d, Y H:i" }}</td>
+                                    <td>{{ request.product.product_name }}</td>
+                                    <td>{{ request.required_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if request.priority == 'low' %}
+                                            <span class="badge bg-info">Low</span>
+                                        {% elif request.priority == 'medium' %}
+                                            <span class="badge bg-primary">Medium</span>
+                                        {% elif request.priority == 'high' %}
+                                            <span class="badge bg-warning">High</span>
+                                        {% elif request.priority == 'urgent' %}
+                                            <span class="badge bg-danger">Urgent</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% elif request.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% elif request.status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% elif request.status == 'completed' %}
+                                            <span class="badge bg-primary">Completed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.bmr %}
+                                            <a href="{% url 'bmr:detail' request.bmr.id %}" class="badge bg-primary text-decoration-none">
+                                                {{ request.bmr.batch_number }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Not assigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'bmr:bmr_request_detail' request.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You haven't made any BMR requests yet. <a href="{% url 'bmr:create_bmr_request' %}" class="alert-link">Create your first request</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#bmrRequestsTable').DataTable({
+        "order": [[ 0, "desc" ]],
+        "pageLength": 25
+    });
+});
+</script>
+{% endblock %}

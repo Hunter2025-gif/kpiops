@@ -1,0 +1,988 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+<!-- DEBUG: UNIFIED SINGLE PANE TEMPLATE ACTIVE -->
+
+{% block extra_css %}
+<style>
+    /* Unified Dashboard Styles */
+    .unified-dashboard {
+        position: relative;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Single Left Sidebar */
+    .sidebar {
+        width: 280px;
+        background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%);
+        color: white;
+        position: fixed;
+        top: 56px; /* Account for main navigation header */
+        left: 0;
+        height: calc(100vh - 56px); /* Subtract header height */
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    /* Main Content Area */
+    .main-content {
+        margin-left: 280px;
+        margin-top: 56px; /* Account for main navigation header */
+        padding: 20px;
+        background-color: #f8f9fa;
+        min-height: calc(100vh - 56px); /* Subtract header height */
+        width: calc(100% - 280px);
+        box-sizing: border-box;
+    }
+
+    /* Sidebar Header */
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        text-align: center;
+    }
+
+    .sidebar-header h4 {
+        margin: 0;
+        font-weight: 600;
+        color: white;
+    }
+
+    /* Sidebar Sections */
+    .sidebar-section {
+        padding: 15px 20px 8px 20px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.6);
+        border-top: 1px solid rgba(255,255,255,0.1);
+        font-weight: 600;
+    }
+
+    /* Sidebar Menu */
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sidebar-menu li {
+        margin: 0;
+    }
+
+    .sidebar-menu a {
+        display: block;
+        padding: 12px 20px;
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left-color: #4facfe;
+        transform: translateX(5px);
+    }
+
+    .sidebar-menu i {
+        width: 20px;
+        margin-right: 10px;
+        text-align: center;
+    }
+
+    /* Content Sections */
+    .content-section {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .content-section.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dashboard Cards */
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .metric-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Section Titles */
+    .section-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+        display: inline-block;
+    }
+
+    /* Tables */
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .table thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(116, 75, 162, 0.05);
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .chart-container canvas {
+        max-width: 100% !important;
+        height: 300px !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            position: relative;
+            height: auto;
+        }
+        
+        .main-content {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
+
+    /* Prevent chart overflow */
+    .row {
+        margin-left: -15px;
+        margin-right: -15px;
+    }
+
+    .col-lg-6, .col-md-6, .col-lg-3, .col-md-6 {
+        padding-left: 15px;
+        padding-right: 15px;
+        box-sizing: border-box;
+    }
+
+    /* Search and Filter Styles */
+    .search-filter-bar {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .search-input, .filter-select {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus, .filter-select:focus {
+        outline: none;
+        border-color: #4facfe;
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unified-dashboard">
+    <!-- Single Unified Sidebar -->
+    <div class="sidebar">
+        <!-- Overview Section -->
+        <div class="sidebar-section">Overview</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="#" onclick="return showSection('dashboard-overview', this)" class="active" id="overview-link">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard Overview
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="return showSection('analytics-section', this)" id="analytics-link">
+                    <i class="fas fa-chart-bar"></i> Analytics & Metrics
+                </a>
+            </li>
+        </ul>
+
+        <!-- BMR Management Section -->
+        <div class="sidebar-section">BMR Management</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="#" onclick="return showSection('bmr-tracking', this)" id="bmr-tracking-link">
+                    <i class="fas fa-file-medical"></i> BMR Timeline Tracking
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="return showSection('active-phases', this)" id="active-phases-link">
+                    <i class="fas fa-tasks"></i> Active Phases Monitor
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'bmr:list' %}">
+                    <i class="fas fa-list"></i> BMR List Management
+                </a>
+            </li>
+        </ul>
+
+        <!-- Production Section -->
+        <div class="sidebar-section">Production</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="#" onclick="return showSection('machine-management', this)" id="machine-link">
+                    <i class="fas fa-cogs"></i> Machine Management
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="return showSection('quality-control', this)" id="qc-link">
+                    <i class="fas fa-microscope"></i> Quality Control
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="return showSection('inventory-status', this)" id="inventory-link">
+                    <i class="fas fa-boxes"></i> Inventory Status
+                </a>
+            </li>
+        </ul>
+
+        <!-- Reports Section -->
+        <div class="sidebar-section">Reports & Export</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'reports:timeline_list' %}">
+                    <i class="fas fa-project-diagram"></i> Visual Timeline
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'reports:comments_report' %}">
+                    <i class="fas fa-comments"></i> Comments Report
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="return showSection('export-tools', this)" id="export-link">
+                    <i class="fas fa-download"></i> Export Tools
+                </a>
+            </li>
+        </ul>
+
+        <!-- Administration Section -->
+        <div class="sidebar-section">Administration</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'dashboards:admin_fgs_monitor' %}">
+                    <i class="fas fa-warehouse"></i> FGS Monitor
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Dashboard Overview Section -->
+        <div class="content-section active" id="dashboard-overview">
+            <div class="mb-4">
+                <h1 class="section-title">Dashboard Overview</h1>
+                <p class="text-muted">Kampala Pharmaceutical Industries - Operations Overview</p>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="metric-value">{{ total_bmrs }}</div>
+                        <div class="metric-label">Total BMRs</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="metric-value">{{ active_batches }}</div>
+                        <div class="metric-label">Active Batches</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="metric-value">{{ completed_batches }}</div>
+                        <div class="metric-label">Completed Batches</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card">
+                        <div class="metric-value">{{ rejected_batches }}</div>
+                        <div class="metric-label">Rejected Batches</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Product Distribution</h5>
+                        <canvas id="productTypeChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Phase Status Overview</h5>
+                        <canvas id="phaseStatusChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BMR Tracking Section -->
+        <div class="content-section" id="bmr-tracking">
+            <div class="mb-4">
+                <h1 class="section-title">BMR Timeline Tracking</h1>
+                <p class="text-muted">Monitor batch manufacturing records and production timelines</p>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-bar">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="search-input form-control" placeholder="Search by batch number, product name..." oninput="filterBMRTable()">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="filter-select form-control" onchange="filterBMRTable()">
+                            <option value="">All Product Types</option>
+                            <option value="tablet">Tablet</option>
+                            <option value="capsule">Capsule</option>
+                            <option value="ointment">Ointment</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="filter-select form-control" onchange="filterBMRTable()">
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BMR Timeline Table -->
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Batch Number</th>
+                            <th>Product</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Created Date</th>
+                            <th>Cycle Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bmr in bmr_list %}
+                        <tr>
+                            <td><strong>{{ bmr.batch_number }}</strong></td>
+                            <td>{{ bmr.product.product_name }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if bmr.status == 'completed' %}bg-success
+                                    {% elif bmr.status == 'approved' %}bg-primary
+                                    {% elif bmr.status == 'rejected' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ bmr.status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: {{ bmr.progress_percentage|default:0 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ bmr.progress_percentage|default:0|floatformat:1 }}%</small>
+                            </td>
+                            <td>{{ bmr.created_date|date:"M d, Y" }}</td>
+                            <td>{{ bmr.cycle_time_days|default:"N/A" }} days</td>
+                            <td>
+                                <a href="{% url 'bmr:detail' bmr.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Active Phases Section -->
+        <div class="content-section" id="active-phases">
+            <div class="mb-4">
+                <h1 class="section-title">Active Phases Monitor</h1>
+                <p class="text-muted">Real-time monitoring of ongoing production phases</p>
+            </div>
+
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Batch Number</th>
+                            <th>Product</th>
+                            <th>Current Phase</th>
+                            <th>Operator</th>
+                            <th>Started</th>
+                            <th>Duration</th>
+                            <th>Machine</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for phase in active_phases %}
+                        <tr>
+                            <td><strong>{{ phase.bmr.batch_number }}</strong></td>
+                            <td>{{ phase.bmr.product.product_name }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ phase.phase.get_phase_name_display }}</span>
+                            </td>
+                            <td>{{ phase.started_by.get_full_name|default:"N/A" }}</td>
+                            <td>{{ phase.started_date|date:"M d, H:i" }}</td>
+                            <td>
+                                {% if phase.started_date %}
+                                    {{ phase.started_date|timesince }} ago
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>{{ phase.machine_used.name|default:"N/A" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Machine Management Section -->
+        <div class="content-section" id="machine-management">
+            <div class="mb-4">
+                <h1 class="section-title">Machine Management</h1>
+                <p class="text-muted">Monitor machine status, breakdowns, and changeovers</p>
+            </div>
+
+            <!-- Machine Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-warning text-dark">
+                        <div class="metric-value">{{ total_breakdowns }}</div>
+                        <div class="metric-label">Total Breakdowns</div>
+                        <small>Today: {{ breakdowns_today }}</small>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-info text-white">
+                        <div class="metric-value">{{ total_changeovers }}</div>
+                        <div class="metric-label">Total Changeovers</div>
+                        <small>Today: {{ changeovers_today }}</small>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-success text-white">
+                        <div class="metric-value">{{ total_machines }}</div>
+                        <div class="metric-label">Total Machines</div>
+                        <small>Active: {{ active_machines }}</small>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-primary text-white">
+                        <div class="metric-value">{{ machine_utilization }}%</div>
+                        <div class="metric-label">Utilization Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Machine List Table -->
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Machine Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Usage Count</th>
+                            <th>Breakdowns</th>
+                            <th>Changeovers</th>
+                            <th>Breakdown Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for machine_id, stats in machine_stats.items %}
+                        <tr>
+                            <td><strong>{{ stats.machine.name }}</strong></td>
+                            <td>{{ stats.machine.machine_type|title }}</td>
+                            <td>
+                                {% if stats.machine.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ stats.usage_count }}</td>
+                            <td>{{ stats.breakdown_count }}</td>
+                            <td>{{ stats.changeover_count }}</td>
+                            <td>{{ stats.breakdown_rate }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Quality Control Section -->
+        <div class="content-section" id="quality-control">
+            <div class="mb-4">
+                <h1 class="section-title">Quality Control Dashboard</h1>
+                <p class="text-muted">Monitor QC test results and quality metrics</p>
+            </div>
+
+            <!-- QC Stats -->
+            <div class="row mb-4">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="stats-card bg-success text-white">
+                        <div class="metric-value">{{ qc_stats.passed_tests|default:0 }}</div>
+                        <div class="metric-label">Passed Tests</div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="stats-card bg-danger text-white">
+                        <div class="metric-value">{{ qc_stats.failed_tests|default:0 }}</div>
+                        <div class="metric-label">Failed Tests</div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="stats-card bg-warning text-dark">
+                        <div class="metric-value">{{ qc_stats.pending_tests|default:0 }}</div>
+                        <div class="metric-label">Pending Tests</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics & Metrics Section -->
+        <div class="content-section" id="analytics-section">
+            <div class="mb-4">
+                <h1 class="section-title">Analytics & Metrics</h1>
+                <p class="text-muted">Detailed analytics and performance metrics</p>
+            </div>
+
+            <!-- Production Metrics -->
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Weekly Production Trend</h5>
+                        <canvas id="weeklyTrendChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="chart-container">
+                        <h5 class="mb-3">Quality Control Pass Rates</h5>
+                        <canvas id="qcPassRateChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-success text-white">
+                        <div class="metric-value">92%</div>
+                        <div class="metric-label">Overall Efficiency</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-info text-white">
+                        <div class="metric-value">5.2</div>
+                        <div class="metric-label">Avg Cycle Time (Days)</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-warning text-dark">
+                        <div class="metric-value">2</div>
+                        <div class="metric-label">Bottleneck Phases</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-primary text-white">
+                        <div class="metric-value">87%</div>
+                        <div class="metric-label">Operator Utilization</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Status Section -->
+        <div class="content-section" id="inventory-status">
+            <div class="mb-4">
+                <h1 class="section-title">Inventory Status</h1>
+                <p class="text-muted">Monitor raw materials and finished goods inventory</p>
+            </div>
+
+            <!-- Inventory Stats -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-primary text-white">
+                        <div class="metric-value">{{ inventory_stats.raw_materials|default:"156" }}</div>
+                        <div class="metric-label">Raw Materials</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-success text-white">
+                        <div class="metric-value">{{ inventory_stats.finished_goods|default:"89" }}</div>
+                        <div class="metric-label">Finished Goods</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-warning text-dark">
+                        <div class="metric-value">{{ inventory_stats.low_stock|default:"12" }}</div>
+                        <div class="metric-label">Low Stock Items</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card bg-info text-white">
+                        <div class="metric-value">{{ inventory_stats.total_value|default:"₦2.4M" }}</div>
+                        <div class="metric-label">Total Value</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Table -->
+            <div class="table-container">
+                <h5 class="mb-3">Recent Inventory Movements</h5>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Current Stock</th>
+                            <th>Minimum Level</th>
+                            <th>Last Updated</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Paracetamol 500mg</strong></td>
+                            <td>Raw Material</td>
+                            <td>2,500 kg</td>
+                            <td>500 kg</td>
+                            <td>2 hours ago</td>
+                            <td><span class="badge bg-success">Good Stock</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vitamin C Tablets</strong></td>
+                            <td>Finished Goods</td>
+                            <td>1,200 units</td>
+                            <td>300 units</td>
+                            <td>5 hours ago</td>
+                            <td><span class="badge bg-success">Good Stock</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ibuprofen 400mg</strong></td>
+                            <td>Raw Material</td>
+                            <td>150 kg</td>
+                            <td>200 kg</td>
+                            <td>1 day ago</td>
+                            <td><span class="badge bg-warning">Low Stock</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Export Tools Section -->
+        <div class="content-section" id="export-tools">
+            <div class="mb-4">
+                <h1 class="section-title">Export Tools</h1>
+                <p class="text-muted">Generate and download reports in various formats</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="stats-card">
+                        <i class="fas fa-file-csv fa-3x mb-3 text-success"></i>
+                        <h5>CSV Export</h5>
+                        <p class="text-muted">Export data in CSV format</p>
+                        <a href="{% url 'reports:export_comments_csv' %}" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download CSV
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="stats-card">
+                        <i class="fas fa-file-word fa-3x mb-3 text-primary"></i>
+                        <h5>Word Export</h5>
+                        <p class="text-muted">Export data in Word document</p>
+                        <a href="{% url 'reports:export_comments_word' %}" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Download Word
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="stats-card">
+                        <i class="fas fa-file-excel fa-3x mb-3 text-success"></i>
+                        <h5>Excel Export</h5>
+                        <p class="text-muted">Export data in Excel format</p>
+                        <a href="{% url 'reports:export_comments_excel' %}" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Unified Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts
+    initCharts();
+});
+
+function showSection(sectionId, clickedElement) {
+    console.log('showSection called with:', sectionId); // Debug log
+    
+    // Hide all content sections
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+        console.log('Hiding section:', section.id); // Debug log
+    });
+    
+    // Remove active class from all sidebar links
+    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Show selected section
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        console.log('Showing section:', sectionId); // Debug log
+    } else {
+        console.error('Section not found:', sectionId); // Debug log
+    }
+    
+    // Add active class to clicked link
+    if (clickedElement) {
+        clickedElement.classList.add('active');
+    }
+    
+    // Re-initialize charts if showing dashboard overview
+    if (sectionId === 'dashboard-overview') {
+        setTimeout(initCharts, 100);
+    } else if (sectionId === 'analytics-section') {
+        setTimeout(() => {
+            // Initialize analytics charts if function exists
+            if (typeof initAnalyticsCharts === 'function') {
+                initAnalyticsCharts();
+            }
+        }, 100);
+    }
+    
+    // Prevent default link behavior
+    return false;
+}
+
+function initCharts() {
+    // Destroy existing charts first
+    Chart.helpers.each(Chart.instances, function(instance) {
+        instance.destroy();
+    });
+    
+    // Product Type Chart
+    const productCtx = document.getElementById('productTypeChart');
+    if (productCtx) {
+        new Chart(productCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tablets', 'Capsules', 'Ointments'],
+                datasets: [{
+                    data: [{{ tablet_count|default:0 }}, {{ capsule_count|default:0 }}, {{ ointment_count|default:0 }}],
+                    backgroundColor: ['#4facfe', '#fa709a', '#ffc371'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Phase Status Chart
+    const phaseCtx = document.getElementById('phaseStatusChart');
+    if (phaseCtx) {
+        new Chart(phaseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mixing', 'Granulation', 'Compression', 'Packing', 'QC Testing'],
+                datasets: [{
+                    label: 'Completed',
+                    data: [{{ mixing_completed|default:0 }}, {{ granulation_completed|default:0 }}, {{ compression_completed|default:0 }}, {{ packing_completed|default:0 }}, {{ qc_completed|default:0 }}],
+                    backgroundColor: '#4facfe',
+                    maxBarThickness: 50
+                }, {
+                    label: 'In Progress',
+                    data: [{{ mixing_inprogress|default:0 }}, {{ granulation_inprogress|default:0 }}, {{ compression_inprogress|default:0 }}, {{ packing_inprogress|default:0 }}, {{ qc_inprogress|default:0 }}],
+                    backgroundColor: '#fa709a',
+                    maxBarThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 20,
+                        ticks: {
+                            stepSize: 2
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+        }
+    }
+}
+
+function initAnalyticsCharts() {
+    // Weekly Production Trend Chart
+    const weeklyTrendCtx = document.getElementById('weeklyTrendChart');
+    if (weeklyTrendCtx) {
+        new Chart(weeklyTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Production Volume',
+                    data: [120, 145, 132, 178],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0,123,255,0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // QC Pass Rate Chart
+    const qcPassRateCtx = document.getElementById('qcPassRateChart');
+    if (qcPassRateCtx) {
+        new Chart(qcPassRateCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Passed', 'Failed', 'Pending'],
+                datasets: [{
+                    data: [85, 8, 7],
+                    backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+}
+
+function filterBMRTable() {
+    // BMR table filtering logic
+    // Implementation depends on your specific filtering requirements
+    console.log('Filtering BMR table...');
+}
+</script>
+{% endblock %}

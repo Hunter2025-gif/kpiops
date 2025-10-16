@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Debug - Kampala Pharmaceutical Industries</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        .chart-container {
+            height: 300px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin-bottom: 30px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Chart Debug Page</h1>
+        
+        <div class="alert alert-info">
+            This is a standalone debug page that loads charts with inline data.
+            If charts render here but not on the main dashboard, it's likely a template or loading issue.
+        </div>
+        
+        <div class="controls">
+            <button id="reloadBtn" class="btn btn-primary me-2">Reload Page</button>
+            <button id="reinitBtn" class="btn btn-success me-2">Reinitialize Charts</button>
+            <button id="debugBtn" class="btn btn-warning">Show Debug Info</button>
+        </div>
+        
+        <div id="debugInfo" style="display: none;">
+            <h3>Debug Information</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Chart.js Status</div>
+                        <div class="card-body">
+                            <div id="chartJsStatus"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Canvas Elements</div>
+                        <div class="card-body">
+                            <div id="canvasStatus"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">Chart Data</div>
+                <div class="card-body">
+                    <pre id="chartData"></pre>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Product Type Distribution</div>
+                    <div class="card-body chart-container">
+                        <canvas id="productTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Phase Status</div>
+                    <div class="card-body chart-container">
+                        <canvas id="phaseStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Weekly Production Trend</div>
+                    <div class="card-body chart-container">
+                        <canvas id="weeklyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Quality Control Status</div>
+                    <div class="card-body chart-container">
+                        <canvas id="qcStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Chart data - Inline for debugging
+        const productData = {
+            tablets: 7,
+            capsules: 3,
+            ointments: 2
+        };
+        
+        const phaseData = {
+            mixing_completed: 55,
+            mixing_inprogress: 32,
+            drying_completed: 33,
+            drying_inprogress: 11,
+            granulation_completed: 89,
+            granulation_inprogress: 55,
+            compression_completed: 134,
+            compression_inprogress: 72,
+            packing_completed: 177,
+            packing_inprogress: 91
+        };
+        
+        const weeklyData = {
+            started_week1: 4,
+            completed_week1: 3,
+            started_week2: 6,
+            completed_week2: 5,
+            started_week3: 8,
+            completed_week3: 6,
+            started_week4: 7,
+            completed_week4: 5
+        };
+        
+        const qcData = {
+            passed: 127,
+            failed: 5,
+            pending: 78
+        };
+        
+        // Initialize charts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Document ready, initializing charts...');
+            initializeCharts();
+            setupDebugInfo();
+            setupButtons();
+        });
+        
+        function setupButtons() {
+            document.getElementById('reloadBtn').addEventListener('click', function() {
+                location.reload();
+            });
+            
+            document.getElementById('reinitBtn').addEventListener('click', function() {
+                destroyCharts();
+                initializeCharts();
+                alert('Charts reinitialized');
+            });
+            
+            document.getElementById('debugBtn').addEventListener('click', function() {
+                const debugInfo = document.getElementById('debugInfo');
+                if (debugInfo.style.display === 'none') {
+                    debugInfo.style.display = 'block';
+                    this.textContent = 'Hide Debug Info';
+                    setupDebugInfo();
+                } else {
+                    debugInfo.style.display = 'none';
+                    this.textContent = 'Show Debug Info';
+                }
+            });
+        }
+        
+        function setupDebugInfo() {
+            // Chart.js status
+            const chartJsStatus = document.getElementById('chartJsStatus');
+            if (typeof Chart !== 'undefined') {
+                chartJsStatus.innerHTML = `
+                    <p><span class="badge bg-success">LOADED</span> Chart.js is available</p>
+                    <p>Version: ${Chart.version || 'Unknown'}</p>
+                    <p>Active charts: ${Object.keys(Chart.instances || {}).length}</p>
+                `;
+            } else {
+                chartJsStatus.innerHTML = `
+                    <p><span class="badge bg-danger">MISSING</span> Chart.js is not available</p>
+                    <p>This is a critical error. Charts cannot be rendered without Chart.js.</p>
+                `;
+            }
+            
+            // Canvas status
+            const canvasStatus = document.getElementById('canvasStatus');
+            const canvasIds = ['productTypeChart', 'phaseStatusChart', 'weeklyTrendChart', 'qcStatusChart'];
+            let canvasHtml = '';
+            
+            canvasIds.forEach(id => {
+                const canvas = document.getElementById(id);
+                if (canvas) {
+                    canvasHtml += `
+                        <p><span class="badge bg-success">FOUND</span> ${id}</p>
+                        <p>Dimensions: ${canvas.width}x${canvas.height}</p>
+                    `;
+                } else {
+                    canvasHtml += `
+                        <p><span class="badge bg-danger">MISSING</span> ${id}</p>
+                    `;
+                }
+            });
+            
+            canvasStatus.innerHTML = canvasHtml;
+            
+            // Chart data
+            document.getElementById('chartData').textContent = 
+                'productData: ' + JSON.stringify(productData, null, 2) + '\n\n' +
+                'phaseData: ' + JSON.stringify(phaseData, null, 2) + '\n\n' +
+                'weeklyData: ' + JSON.stringify(weeklyData, null, 2) + '\n\n' +
+                'qcData: ' + JSON.stringify(qcData, null, 2);
+        }
+        
+        function destroyCharts() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                return;
+            }
+            
+            // Destroy all existing Chart instances
+            Object.keys(Chart.instances).forEach(key => {
+                Chart.instances[key].destroy();
+            });
+            
+            console.log('All charts destroyed');
+        }
+        
+        function initializeCharts() {
+            try {
+                console.log('Initializing charts...');
+                
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js not loaded!');
+                    alert('Chart.js is not loaded. Charts cannot be rendered.');
+                    return;
+                }
+                
+                initializeProductTypeChart();
+                initializePhaseStatusChart();
+                initializeWeeklyTrendChart();
+                initializeQcStatusChart();
+                
+                console.log('All charts initialized successfully');
+            } catch (error) {
+                console.error('Error during chart initialization:', error);
+                alert('Error initializing charts: ' + error.message);
+            }
+        }
+        
+        function initializeProductTypeChart() {
+            const canvas = document.getElementById('productTypeChart');
+            if (!canvas) {
+                console.error('Product Type Chart canvas not found');
+                return null;
+            }
+            
+            // Make sure the canvas has dimensions
+            ensureCanvasDimensions(canvas);
+            
+            return new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Tablets', 'Capsules', 'Ointments'],
+                    datasets: [{
+                        data: [productData.tablets || 0, productData.capsules || 0, productData.ointments || 0],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(75, 192, 192, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initializePhaseStatusChart() {
+            const canvas = document.getElementById('phaseStatusChart');
+            if (!canvas) {
+                console.error('Phase Status Chart canvas not found');
+                return null;
+            }
+            
+            // Make sure the canvas has dimensions
+            ensureCanvasDimensions(canvas);
+            
+            return new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Mixing', 'Drying', 'Granulation', 'Compression', 'Packing'],
+                    datasets: [{
+                        label: 'Completed',
+                        data: [
+                            phaseData.mixing_completed || 0,
+                            phaseData.drying_completed || 0,
+                            phaseData.granulation_completed || 0,
+                            phaseData.compression_completed || 0,
+                            phaseData.packing_completed || 0
+                        ],
+                        backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                    }, {
+                        label: 'In Progress',
+                        data: [
+                            phaseData.mixing_inprogress || 0,
+                            phaseData.drying_inprogress || 0,
+                            phaseData.granulation_inprogress || 0,
+                            phaseData.compression_inprogress || 0,
+                            phaseData.packing_inprogress || 0
+                        ],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initializeWeeklyTrendChart() {
+            const canvas = document.getElementById('weeklyTrendChart');
+            if (!canvas) {
+                console.error('Weekly Trend Chart canvas not found');
+                return null;
+            }
+            
+            // Make sure the canvas has dimensions
+            ensureCanvasDimensions(canvas);
+            
+            return new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Batches Started',
+                        data: [
+                            weeklyData.started_week1 || 0,
+                            weeklyData.started_week2 || 0,
+                            weeklyData.started_week3 || 0,
+                            weeklyData.started_week4 || 0
+                        ],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        fill: true
+                    }, {
+                        label: 'Batches Completed',
+                        data: [
+                            weeklyData.completed_week1 || 0,
+                            weeklyData.completed_week2 || 0,
+                            weeklyData.completed_week3 || 0,
+                            weeklyData.completed_week4 || 0
+                        ],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initializeQcStatusChart() {
+            const canvas = document.getElementById('qcStatusChart');
+            if (!canvas) {
+                console.error('QC Status Chart canvas not found');
+                return null;
+            }
+            
+            // Make sure the canvas has dimensions
+            ensureCanvasDimensions(canvas);
+            
+            return new Chart(canvas.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ['Passed', 'Failed', 'Pending'],
+                    datasets: [{
+                        data: [
+                            qcData.passed || 0,
+                            qcData.failed || 0,
+                            qcData.pending || 0
+                        ],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(255, 205, 86, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function ensureCanvasDimensions(canvas) {
+            if (canvas.width === 0 || canvas.height === 0) {
+                const parent = canvas.parentElement;
+                canvas.width = parent.clientWidth || 300;
+                canvas.height = parent.clientHeight || 300;
+                console.log(`Adjusted canvas dimensions to ${canvas.width}x${canvas.height}`);
+            }
+        }
+    </script>
+</body>
+</html>

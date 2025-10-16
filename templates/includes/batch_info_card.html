@@ -1,0 +1,50 @@
+{% comment %}
+    This template renders a standardized batch information card that can be included in various views.
+    It expects a 'bmr' or 'batch' object to be passed in the context.
+{% endcomment %}
+
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-info-circle"></i> Batch Information
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <th>Batch Number:</th>
+                        <td>{{ bmr.batch_number|default:batch.bmr.batch_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Product:</th>
+                        <td>{{ bmr.product.product_name|default:batch.bmr.product.product_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Created By:</th>
+                        <td>{{ bmr.created_by.get_full_name|default:batch.bmr.created_by.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Current Status:</th>
+                        <td>
+                            {% with status=bmr.status|default:batch.bmr.status %}
+                            {% if status == 'approved' %}
+                            <span class="badge bg-success">{{ status|title }}</span>
+                            {% elif status == 'draft' %}
+                            <span class="badge bg-secondary">{{ status|title }}</span>
+                            {% elif status == 'in_production' %}
+                            <span class="badge bg-info">{{ status|title }}</span>
+                            {% else %}
+                            <span class="badge bg-primary">{{ status|title }}</span>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Current Phase:</th>
+                        <td>{{ current_phase|default:"" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,295 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Production Manager Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-industry me-2"></i>{{ dashboard_title }}
+                    </h2>
+                    <p class="text-muted mb-0">Production Planning & BMR Request Management</p>
+                </div>
+                <div class="text-end">
+                    <small class="text-success">{{ user.get_role_display }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-center">
+                        <nav class="btn-group" role="group">
+                            <a href="{% url 'bmr:create_bmr_request' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus-circle me-1"></i>Request New BMR
+                            </a>
+                            <a href="{% url 'bmr:bmr_request_list' %}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-list me-1"></i>My BMR Requests
+                            </a>
+                            <a href="{% url 'reports:timeline_list' %}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-project-diagram me-1"></i>Production Timeline
+                            </a>
+                            <a href="{% url 'bmr:list' %}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-file-medical me-1"></i>All BMRs
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BMR Request Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-clipboard-list"></i> Total Requests</h6>
+                    <h3 class="card-text">{{ bmr_request_stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-clock"></i> Pending</h6>
+                    <h3 class="card-text">{{ bmr_request_stats.pending }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-check-circle"></i> Approved</h6>
+                    <h3 class="card-text">{{ bmr_request_stats.approved }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-flag-checkered"></i> Completed</h6>
+                    <h3 class="card-text">{{ bmr_request_stats.completed }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Overview -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-chart-line me-1"></i>
+                    Overall Production Status
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ production_stats.total_bmrs }}</h4>
+                            <small class="text-muted">Total BMRs</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning">{{ production_stats.active_production }}</h4>
+                            <small class="text-muted">Active Production</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-success">{{ production_stats.completed_batches }}</h4>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-secondary">{{ production_stats.pending_approval }}</h4>
+                            <small class="text-muted">Pending Approval</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    Quick BMR Request
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Need to start a new production batch?</p>
+                    <a href="{% url 'bmr:create_bmr_request' %}" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-plus-circle me-2"></i>Request New BMR from QA
+                    </a>
+                    <small class="text-muted d-block mt-2">QA will review and create the BMR for production</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent BMR Requests -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <i class="fas fa-history me-1"></i>
+                    Recent BMR Requests
+                </div>
+                <div class="card-body">
+                    {% if recent_bmr_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Request Date</th>
+                                        <th>Product</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>BMR</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in recent_bmr_requests %}
+                                        <tr>
+                                            <td>{{ request.request_date|date:"M d, Y" }}</td>
+                                            <td>{{ request.product.product_name }}</td>
+                                            <td>
+                                                {% if request.priority == 'low' %}
+                                                    <span class="badge bg-info">Low</span>
+                                                {% elif request.priority == 'medium' %}
+                                                    <span class="badge bg-primary">Medium</span>
+                                                {% elif request.priority == 'high' %}
+                                                    <span class="badge bg-warning">High</span>
+                                                {% elif request.priority == 'urgent' %}
+                                                    <span class="badge bg-danger">Urgent</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if request.status == 'pending' %}
+                                                    <span class="badge bg-secondary">Pending</span>
+                                                {% elif request.status == 'approved' %}
+                                                    <span class="badge bg-success">Approved</span>
+                                                {% elif request.status == 'rejected' %}
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                {% elif request.status == 'completed' %}
+                                                    <span class="badge bg-primary">Completed</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if request.bmr %}
+                                                    <a href="{% url 'bmr:detail' request.bmr.id %}" class="badge bg-primary text-decoration-none">
+                                                        {{ request.bmr.batch_number }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">Not assigned</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'bmr:bmr_request_detail' request.id %}" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center">
+                            <a href="{% url 'bmr:bmr_request_list' %}" class="btn btn-outline-primary">
+                                View All My Requests
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No BMR Requests Yet</h5>
+                            <p class="text-muted">You haven't made any BMR requests yet.</p>
+                            <a href="{% url 'bmr:create_bmr_request' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i>Create Your First Request
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BMRs Created from My Requests -->
+    {% if user_bmrs %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-file-medical me-1"></i>
+                    BMRs Created from My Requests
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Batch Number</th>
+                                    <th>Product</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bmr in user_bmrs %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ bmr.batch_number }}</strong>
+                                        </td>
+                                        <td>{{ bmr.product.product_name }}</td>
+                                        <td>
+                                            {% if bmr.status == 'draft' %}
+                                                <span class="badge bg-secondary">Draft</span>
+                                            {% elif bmr.status == 'approved' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif bmr.status == 'in_production' %}
+                                                <span class="badge bg-warning">In Production</span>
+                                            {% elif bmr.status == 'completed' %}
+                                                <span class="badge bg-primary">Completed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ bmr.created_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <a href="{% url 'bmr:detail' bmr.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add any JavaScript for interactive features
+    
+    // Auto-refresh statistics every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+});
+</script>
+{% endblock %}

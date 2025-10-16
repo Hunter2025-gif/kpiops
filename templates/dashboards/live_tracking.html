@@ -1,0 +1,64 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Live BMR Tracking - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="text-primary mb-4"><i class="fas fa-broadcast-tower me-2"></i>Live BMR Tracking</h2>
+    {% for timeline in timeline_data %}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">BMR {{ timeline.bmr.batch_number }} - {{ timeline.bmr.product.product_name }}</h5>
+            <small>Created: {{ timeline.bmr.created_date|date:"Y-m-d H:i" }} | Product Type: {{ timeline.bmr.product.product_type|title }}</small>
+        </div>
+        <div class="card-body">
+            <div class="mb-2">
+                <strong>Total Production Time:</strong>
+                {% if timeline.total_production_time %}
+                    {{ timeline.total_production_time }}
+                {% elif timeline.phase_timeline and timeline.phase_timeline|length > 0 %}
+                    {% with first=timeline.phase_timeline.0 last=timeline.phase_timeline|last %}
+                        {% if last.completed_date and first.started_date %}
+                            {{ last.completed_date|timesince:first.started_date }}
+                        {% else %}
+                            In Progress
+                        {% endif %}
+                    {% endwith %}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Phase Name</th>
+                            <th>Status</th>
+                            <th>Started</th>
+                            <th>Ended</th>
+                            <th>Duration</th>
+                            <th>Operator</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for phase in timeline.phase_timeline %}
+                        <tr>
+                            <td>{{ phase.phase_name }}</td>
+                            <td>{{ phase.status }}</td>
+                            <td>{% if phase.started_date %}{{ phase.started_date|date:"Y-m-d H:i" }}{% else %}--{% endif %}</td>
+                            <td>{% if phase.completed_date %}{{ phase.completed_date|date:"Y-m-d H:i" }}{% else %}--{% endif %}</td>
+                            <td>{% if phase.duration_formatted %}{{ phase.duration_formatted }}{% else %}--{% endif %}</td>
+                            <td>{{ phase.started_by|default:"--" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">No BMRs found for live tracking.</div>
+    {% endfor %}
+</div>
+{% endblock %}

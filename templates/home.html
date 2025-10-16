@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Kampala Pharmaceutical Industries - Operations System{% endblock %}
+
+{% block header %}Welcome to Operations System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white rounded p-5 mb-4">
+            <h1 class="display-4">
+
+                Kampala Pharmaceutical Industries
+            </h1>
+            <p class="lead">Operations Management System</p>
+            <hr class="my-4 bg-light">
+            <p>Manage pharmaceutical production workflows from BMR creation to finished goods storage.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if user.is_authenticated %}
+        <!-- Authenticated User Dashboard -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tachometer-alt"></i> Your Dashboard</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Welcome, {{ user.get_full_name|default:user.username }}!</h6>
+                    <p class="text-muted">Role: <span class="badge bg-secondary">{{ user.get_role_display }}</span></p>
+                    
+                    <div class="row mt-4">
+                        {% if user.role == 'qa' %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-medical fa-2x text-primary mb-2"></i>
+                                    <h6>Create BMR</h6>
+                                    <p class="small text-muted">Create new Batch Manufacturing Record</p>
+                                    <a href="{% url 'create_bmr' %}" class="btn btn-primary btn-sm">Create BMR</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-list fa-2x text-info mb-2"></i>
+                                    <h6>View BMRs</h6>
+                                    <p class="small text-muted">Manage existing BMRs</p>
+                                    <a href="{% url 'admin:bmr_bmr_changelist' %}" class="btn btn-info btn-sm">View BMRs</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.is_staff %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                                    <h6>Admin Dashboard</h6>
+                                    <p class="small text-muted">Comprehensive admin overview</p>
+                                    <a href="{% url 'dashboards:admin_dashboard' %}" class="btn btn-info btn-sm">Admin Dashboard</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cogs fa-2x text-success mb-2"></i>
+                                    <h6>Admin Panel</h6>
+                                    <p class="small text-muted">Full system administration</p>
+                                    <a href="{% url 'admin:index' %}" class="btn btn-success btn-sm">Admin Panel</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tasks fa-2x text-warning mb-2"></i>
+                                    <h6>My Tasks</h6>
+                                    <p class="small text-muted">View assigned phases</p>
+                                    <a href="{% url 'admin:workflow_batchphaseexecution_changelist' %}" class="btn btn-warning btn-sm">View Tasks</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-primary mb-1">{{ bmr_count|default:"0" }}</h4>
+                                <small class="text-muted">Total BMRs</small>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-success mb-1">{{ product_count|default:"0" }}</h4>
+                                <small class="text-muted">Active Products</small>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-info mb-1">{{ phase_count|default:"0" }}</h4>
+                                <small class="text-muted">Workflow Phases</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">No recent activity</p>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Not Authenticated -->
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h5><i class="fas fa-sign-in-alt"></i> Please Login</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p>Please login to access the pharmaceutical operations system.</p>
+                    
+
+                    
+                    <a href="{% url 'admin:login' %}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Login to System
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-flow-chart"></i> System Features</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-file-medical fa-2x text-primary mb-2"></i>
+                        <h6>BMR Management</h6>
+                        <p class="small text-muted">Create and manage Batch Manufacturing Records with manual batch numbering</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-cogs fa-2x text-success mb-2"></i>
+                        <h6>Workflow Automation</h6>
+                        <p class="small text-muted">Automatic phase triggering and quality control checkpoints</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-users fa-2x text-info mb-2"></i>
+                        <h6>Role-Based Access</h6>
+                        <p class="small text-muted">16 different user roles for complete production coverage</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-pills fa-2x text-warning mb-2"></i>
+                        <h6>Product Types</h6>
+                        <p class="small text-muted">Support for Ointments, Tablets (Normal/Type 2), and Capsules</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

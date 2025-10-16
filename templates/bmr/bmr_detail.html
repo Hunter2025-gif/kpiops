@@ -1,0 +1,512 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header with navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'bmr:list' %}">BMR List</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ bmr.bmr_number }}</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-file-medical me-2"></i>
+                    BMR Details
+                </h1>
+            </div>
+            <div>
+                {% if user.role == 'qa' and bmr.status == 'draft' %}
+                <a href="{% url 'admin:bmr_bmr_change' bmr.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit BMR
+                </a>
+                {% endif %}
+                <a href="{% url 'bmr:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to List
+                </a>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>BMR Created Successfully!</strong> 
+            Batch number <span class="batch-number">{{ bmr.batch_number }}</span> has been assigned.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- BMR Information Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    BMR Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>BMR Number:</strong></td>
+                                <td><span class="batch-number">{{ bmr.bmr_number }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batch Number:</strong></td>
+                                <td><span class="batch-number">{{ bmr.batch_number }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Manufacturing Date:</strong></td>
+                                <td>{{ bmr.manufacturing_date|date:"F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Product:</strong></td>
+                                <td>
+                                    <strong>{{ bmr.product.product_name }}</strong>
+                                    <br><small class="text-muted">{{ bmr.product.get_product_type_display }}</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    {% if bmr.status == 'draft' %}
+                                        <span class="badge bg-secondary fs-6">Draft</span>
+                                    {% elif bmr.status == 'pending_approval' %}
+                                        <span class="badge bg-warning fs-6">Pending Approval</span>
+                                    {% elif bmr.status == 'approved' %}
+                                        <span class="badge bg-success fs-6">Approved</span>
+                                    {% elif bmr.status == 'rejected' %}
+                                        <span class="badge bg-danger fs-6">Rejected</span>
+                                    {% elif bmr.status == 'in_progress' %}
+                                        <span class="badge bg-info fs-6">In Progress</span>
+                                    {% elif bmr.status == 'completed' %}
+                                        <span class="badge bg-primary fs-6">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark fs-6">{{ bmr.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Created Date:</strong></td>
+                                <td>{{ bmr.created_date|date:"F d, Y g:i A" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Created By:</strong></td>
+                                <td>
+                                    {{ bmr.created_by.get_full_name|default:bmr.created_by.username }}
+                                    <br><small class="text-muted">{{ bmr.created_by.get_role_display }}</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batch Size:</strong></td>
+                                <td>
+                                    {% if bmr.batch_size %}
+                                        {{ bmr.batch_size|floatformat:2 }} {{ bmr.batch_size_unit|default:"units" }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Packaging Size:</strong></td>
+                                <td>
+                                    {% if bmr.product.packaging_size_in_units %}
+                                        {{ bmr.product.packaging_size_in_units|floatformat:2 }} units
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Time Summary -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Production Time Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <div class="border-end">
+                            <h3 class="text-primary mb-2">
+                                {% if total_production_time %}{{ total_production_time }}{% else %}In Progress{% endif %}
+                            </h3>
+                            <p class="text-muted mb-0">Total Production Time</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h3 class="mb-2">
+                            <span class="badge 
+                                {% if production_status == 'Completed' %}bg-success
+                                {% else %}bg-warning{% endif %} fs-5">
+                                {{ production_status }}
+                            </span>
+                        </h3>
+                        <p class="text-muted mb-0">Production Status</p>
+                    </div>
+                </div>
+                {% if total_production_hours > 0 %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Based on {{ bmr.batchphaseexecution_set.filter.count|default:"0" }} completed phases
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Materials Section -->
+        {% if materials %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-boxes me-2"></i>
+                    Required Materials
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Material</th>
+                                <th>Required Quantity</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for material in materials %}
+                            <tr>
+                                <td>{{ material.material.material_name }}</td>
+                                <td>{{ material.required_quantity|floatformat:2 }}</td>
+                                <td>{{ material.unit }}</td>
+                                <td>
+                                    {% if material.dispensed_quantity %}
+                                        <span class="badge bg-success">Dispensed</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Workflow Progress Section -->
+        {% if workflow_status %}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    Production Workflow Progress
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><strong>Overall Progress:</strong></span>
+                        <span>{{ workflow_status.completed_phases }}/{{ workflow_status.total_phases }} phases completed</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ workflow_status.progress_percentage|floatformat:1 }}%"
+                             aria-valuenow="{{ workflow_status.progress_percentage|floatformat:1 }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ workflow_status.progress_percentage|floatformat:1 }}%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Phase -->
+                {% if workflow_status.current_phase %}
+                <div class="alert alert-primary">
+                    <i class="fas fa-play-circle me-2"></i>
+                    <strong>Current Phase:</strong> {{ workflow_status.current_phase.phase.get_phase_name_display }}
+                    <br><small>Status: {{ workflow_status.current_phase.get_status_display }}</small>
+                    {% if workflow_status.current_phase.started_by %}
+                        <br><small>Started by: {{ workflow_status.current_phase.started_by.get_full_name|default:workflow_status.current_phase.started_by.username }}</small>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Next Phase -->
+                {% if workflow_status.next_phase %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-clock me-2"></i>
+                    <strong>Next Phase:</strong> {{ workflow_status.next_phase.phase.get_phase_name_display }}
+                    <br><small>This phase will be available once the current phase is completed.</small>
+                </div>
+                {% elif workflow_status.is_complete %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Production Complete!</strong> All phases have been completed successfully.
+                </div>
+                {% endif %}
+
+                <!-- Enhanced Workflow Timeline -->
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6><i class="fas fa-project-diagram me-2"></i>Workflow Progress</h6>
+                        <div>
+                            <a href="{% url 'reports:enhanced_timeline' bmr.id %}" class="btn btn-sm btn-primary me-2">
+                                <i class="fas fa-expand me-1"></i>Full Timeline View
+                            </a>
+                            <a href="{% url 'reports:bmr_comments_detail' bmr.id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-comments me-1"></i>View Comments
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Compact Visual Progress -->
+                    <div class="card">
+                        <div class="card-body p-3">
+                            <!-- Overall Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold">Overall Progress</span>
+                                    <span class="badge bg-primary">
+                                        {% if workflow_status.progress_percentage %}
+                                            {{ workflow_status.progress_percentage|floatformat:0 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="progress mb-3" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {% if workflow_status.progress_percentage %}{{ workflow_status.progress_percentage }}{% else %}0{% endif %}%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Phase Progress Grid -->
+                            <div class="row g-2">
+                                {% for execution in workflow_status.all_executions %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card border-0 shadow-sm h-100 
+                                        {% if execution.status == 'completed' %}bg-success text-white
+                                        {% elif execution.status == 'in_progress' %}bg-primary text-white
+                                        {% elif execution.status == 'failed' %}bg-danger text-white
+                                        {% else %}bg-light{% endif %}">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2">
+                                                    {% if execution.status == 'completed' %}
+                                                        <i class="fas fa-check-circle"></i>
+                                                    {% elif execution.status == 'in_progress' %}
+                                                        <i class="fas fa-play-circle"></i>
+                                                    {% elif execution.status == 'failed' %}
+                                                        <i class="fas fa-times-circle"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-circle"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-bold small">{{ execution.phase.get_phase_name_display }}</div>
+                                                    <div class="small">
+                                                        {% if execution.status == 'completed' %}
+                                                            ✓ Completed
+                                                        {% elif execution.status == 'in_progress' %}
+                                                            ⚡ In Progress
+                                                        {% elif execution.status == 'failed' %}
+                                                            ✗ Failed
+                                                        {% else %}
+                                                            ⏳ Pending
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if execution.completed_date %}
+                                                        <div class="small opacity-75">{{ execution.completed_date|date:"M d" }}</div>
+                                                    {% elif execution.started_date %}
+                                                        <div class="small opacity-75">Started {{ execution.started_date|date:"M d" }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Current & Next Phase Info -->
+                            <div class="row mt-3">
+                                {% if workflow_status.current_phase %}
+                                <div class="col-md-6">
+                                    <div class="alert alert-primary py-2 mb-2">
+                                        <div class="small">
+                                            <i class="fas fa-play-circle me-1"></i><strong>Current:</strong>
+                                            {{ workflow_status.current_phase.phase.get_phase_name_display }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if workflow_status.next_phase %}
+                                <div class="col-md-6">
+                                    <div class="alert alert-warning py-2 mb-2">
+                                        <div class="small">
+                                            <i class="fas fa-clock me-1"></i><strong>Next:</strong>
+                                            {{ workflow_status.next_phase.phase.get_phase_name_display }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif workflow_status.is_complete %}
+                                <div class="col-md-6">
+                                    <div class="alert alert-success py-2 mb-2">
+                                        <div class="small">
+                                            <i class="fas fa-check-circle me-1"></i><strong>Status:</strong>
+                                            Production Complete!
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Actions -->
+                {% if user_phases %}
+                <div class="mt-4">
+                    <h6><i class="fas fa-user-cog me-2"></i>Available Actions for {{ user.get_role_display }}</h6>
+                    <div class="d-grid gap-2">
+                        {% for phase_execution in user_phases %}
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <strong>{{ phase_execution.phase.get_phase_name_display }}</strong>
+                                <br><small class="text-muted">Status: {{ phase_execution.get_status_display }}</small>
+                            </div>
+                            <div>
+                                {% if phase_execution.status == 'pending' %}
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="fas fa-play me-1"></i>Start Phase
+                                </button>
+                                {% elif phase_execution.status == 'in_progress' %}
+                                <button class="btn btn-success btn-sm">
+                                    <i class="fas fa-check me-1"></i>Complete Phase
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Next Steps -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    Next Steps
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if bmr.status == 'draft' %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>BMR is in Draft status.</strong> 
+                    {% if user.role == 'qa' %}
+                        You can edit this BMR and submit it for regulatory approval when ready.
+                    {% else %}
+                        This BMR needs to be reviewed and approved before production can begin.
+                    {% endif %}
+                </div>
+                {% elif bmr.status == 'pending_approval' %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-clock me-2"></i>
+                    <strong>Waiting for Regulatory Approval.</strong> 
+                    The BMR will be available for production once approved.
+                </div>
+                {% elif bmr.status == 'approved' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>BMR Approved!</strong> 
+                    Production can now begin. The workflow will be managed automatically as each phase is completed.
+                </div>
+                {% endif %}
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'home' %}" class="btn btn-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Go to Dashboard
+                    </a>
+                    {% if user.role == 'qa' %}
+                    <a href="{% url 'bmr:create' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Create Another BMR
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-dismiss success alert after 5 seconds
+    setTimeout(function() {
+        var alert = document.querySelector('.alert-success');
+        if (alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+</script>
+<style>
+    .timeline {
+        position: relative;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .timeline-marker {
+        width: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 0.375rem;
+    }
+    
+    .progress-bar {
+        background-color: #0d6efd;
+        transition: width 0.6s ease;
+    }
+</style>
+{% endblock %}

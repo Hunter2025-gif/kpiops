@@ -1,0 +1,932 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}FGS Store Monitor - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fgs-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: #fff;
+        padding: 20px 0;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .fgs-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .fgs-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .storage-metric {
+        background: linear-gradient(135deg, #6f7dd4 0%, #5a6acf 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .storage-metric.green {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .storage-metric.blue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .storage-metric.orange {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .capacity-bar {
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+    
+    .capacity-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+        transition: width 0.3s ease;
+    }
+    
+    .navigation-sidebar {
+        background: linear-gradient(135deg, #6f7dd4 0%, #5a6acf 100%);
+        border-radius: 10px;
+        padding: 20px;
+        color: #fff;
+        position: sticky;
+        top: 20px;
+    }
+    .navigation-sidebar .small,
+    .navigation-sidebar .small span,
+    .navigation-sidebar .small div {
+        color: #2196f3 !important; /* Use a readable blue shade */
+        opacity: 1 !important;
+    }
+    
+    .nav-link {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        display: block;
+        margin: 5px 0;
+    }
+    
+    .nav-link:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+
+    /* --- FIX: Ensure CSS block is closed before next rule --- */
+
+    .product-group {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .batch-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 8px 0;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .batch-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-pending { background-color: #ffc107; }
+    .status-progress { background-color: #007bff; }
+    .status-completed { background-color: #28a745; }
+    
+    /* Analytics Card Styles */
+    .analytics-card {
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        background: white;
+        height: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .analytics-card .card-header {
+        padding: 15px 20px;
+        font-weight: 600;
+    }
+    
+    .analytics-card .card-body {
+        padding: 20px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 250px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-item {
+        padding: 10px 15px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        margin-bottom: 10px;
+        border-left: 3px solid #007bff;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #343a40;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    
+    .bg-success-light {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="fgs-header">
+    <div class="container">
+        <div class="text-center">
+            <div>
+                <h1 class="h2 mb-0 text-primary">
+                    Finished Goods Store Monitor
+                </h1>
+                <p class="mb-0 mt-2">Real-time monitoring of finished products storage and inventory</p>
+            </div>
+            <div class="mt-3">
+                <span class="badge bg-primary text-white fs-6 px-3 py-2" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;">
+                    <i class="fas fa-clock me-2"></i>Live Update
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3">
+            <div class="navigation-sidebar">
+                <h5 class="mb-3">
+                    <i class="fas fa-compass me-2"></i>
+                    Navigation
+                </h5>
+                <a href="{% url 'dashboards:admin_dashboard' %}" class="nav-link">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+                <a href="{% url 'dashboards:admin_timeline' %}" class="nav-link">
+                    <i class="fas fa-timeline me-2"></i>BMR Timeline
+                </a>
+                <a href="#analytics" class="nav-link">
+                    <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
+                </a>
+                <a href="#metrics" class="nav-link">
+                    <i class="fas fa-chart-bar me-2"></i>Storage Metrics
+                </a>
+                <a href="#workflow" class="nav-link">
+                    <i class="fas fa-cogs me-2"></i>Storage Workflow
+                </a>
+                <a href="#inventory" class="nav-link">
+                    <i class="fas fa-boxes me-2"></i>Current Inventory
+                </a>
+                <a href="#releases" class="nav-link">
+                    <i class="fas fa-truck me-2"></i>Released Goods
+                </a>
+                <a href="#recent" class="nav-link">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </a>
+                <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+                <!-- Quick Stats -->
+                <div class="mt-4">
+                    <h6 class="mb-3">Storage Overview</h6>
+                    <div class="small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Stored:</span>
+                            <span>{{ fgs_stats.total_in_store }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Pending:</span>
+                            <span>{{ fgs_stats.pending_storage }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Available for Sale:</span>
+                            <span class="text-success">{{ fgs_stats.available_for_sale }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Recent Releases:</span>
+                            <span class="text-warning">{{ fgs_stats.recent_releases }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Capacity:</span>
+                            <span>{{ fgs_stats.storage_capacity_used|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Analytics Dashboard -->
+            <div id="analytics" class="row mb-4">
+                <div class="col-12 mb-4">
+                    <h4 class="text-primary mb-3">
+                        <i class="fas fa-chart-line me-2"></i>Production Analytics
+                    </h4>
+                </div>
+                
+                <!-- Production Status by Product Type -->
+                <div class="col-md-6">
+                    <div class="analytics-card">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-pills me-2"></i>
+                            Production Status by Product Type
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="productTypeChart"></canvas>
+                            </div>
+                            <div class="mt-3">
+                                {% for product_type, count in product_type_data.items %}
+                                <div class="stat-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-value">{{ count }}</div>
+                                            <div class="stat-label">{{ product_type|title }}</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-success">{{ count }} batches</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center text-muted p-4">
+                                    <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                                    <p>No production data available</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase Completion Rates -->
+                <div class="col-md-6">
+                    <div class="analytics-card">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-tasks me-2"></i>
+                            Phase Completion Rates
+                        </div>
+                        <div class="card-body">
+                            {% for phase_name, data in phase_completion.items %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-dark">{{ phase_name|title }}</span>
+                                    <span class="text-primary">{{ data.completion_rate }}%</span>
+                                </div>
+                                <div class="progress progress-bar-custom">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ data.completion_rate }}%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">Completed: {{ data.completed }}</small>
+                                    <small class="text-muted">Total: {{ data.total }}</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-tasks fa-3x mb-3"></i>
+                                <p>No phase data available</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekly Production Trend -->
+                <div class="col-md-6 mt-4">
+                    <div class="analytics-card">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Weekly Production Trend
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="weeklyTrendChart"></canvas>
+                            </div>
+                            <div class="mt-3">
+                                <div class="row">
+                                    {% for week, count in weekly_production.items %}
+                                    <div class="col-md-6">
+                                        <div class="stat-item">
+                                            <div class="stat-value">{{ count }}</div>
+                                            <div class="stat-label">{{ week }}</div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12 text-center text-muted p-4">
+                                        <p>No weekly data available</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QC Statistics -->
+                <div class="col-md-6 mt-4">
+                    <div class="analytics-card">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-microscope me-2"></i>
+                            QC Statistics
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="qcStatsChart"></canvas>
+                            </div>
+                            <div class="mt-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="stat-item bg-success-light">
+                                            <div class="stat-value text-success">{{ qc_stats.passed }}</div>
+                                            <div class="stat-label">QC Tests Passed</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="stat-item bg-danger-light">
+                                            <div class="stat-value text-danger">{{ qc_stats.failed }}</div>
+                                            <div class="stat-label">QC Tests Failed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage Metrics -->
+            <div id="metrics" class="row mb-4">
+                <div class="col-md-3">
+                    <div class="storage-metric green">
+                        <i class="fas fa-boxes fa-3x mb-3 text-primary"></i>
+                        <h3>{{ fgs_stats.total_in_store }}</h3>
+                        <p class="mb-0">Batches Stored</p>
+                        <small>Total in FGS</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="storage-metric blue">
+                        <i class="fas fa-hourglass-half fa-3x mb-3 text-primary"></i>
+                        <h3>{{ fgs_stats.pending_storage }}</h3>
+                        <p class="mb-0">Pending Storage</p>
+                        <small>Awaiting placement</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="storage-metric orange">
+                        <i class="fas fa-truck-loading fa-3x mb-3 text-primary"></i>
+                        <h3>{{ fgs_stats.being_stored }}</h3>
+                        <p class="mb-0">Being Stored</p>
+                        <small>In progress</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="storage-metric">
+                        <i class="fas fa-chart-pie fa-3x mb-3 text-primary"></i>
+                        <h3>{{ fgs_stats.storage_capacity_used|floatformat:1 }}%</h3>
+                        <p class="mb-0">Capacity Used</p>
+                        <small>Storage utilization</small>
+                    </div>
+                </div>
+            </div>
+            <!-- Storage Capacity Visual -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Storage Capacity Overview
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6>Current Storage Utilization</h6>
+                                    <div class="capacity-bar">
+                                        <div class="capacity-fill" style="width: {{ fgs_stats.storage_capacity_used }}%"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-muted small">
+                                        <span>0 batches</span>
+                                        <span>500 batches (50%)</span>
+                                        <span>1000 batches (100%)</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <h4 class="text-primary">{{ fgs_stats.total_in_store }}/1000</h4>
+                                    <p class="text-muted mb-0">Batches Stored</p>
+                                    {% if fgs_stats.storage_capacity_used > 80 %}
+                                    <div class="alert alert-warning mt-2 mb-0">
+                                        <small><i class="fas fa-exclamation-triangle me-1"></i>Nearing capacity</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Storage Workflow Sections -->
+            <div id="workflow" class="row mb-4">
+                <!-- Pending Storage -->
+                <div class="col-lg-4">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                Pending Storage ({{ fgs_stats.pending_storage }})
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for phase in fgs_pending|slice:":5" %}
+                            <div class="batch-item">
+                                <div class="d-flex align-items-center">
+                                    <span class="status-indicator status-pending"></span>
+                                    <div class="flex-grow-1">
+                                        <strong>{{ phase.bmr.batch_number }}</strong>
+                                        <br><small class="text-muted">{{ phase.bmr.product.product_name }}</small>
+                                    </div>
+                                    <small class="text-muted">{{ phase.bmr.created_date|date:"M d" }}</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted text-center">No pending storage</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Being Stored -->
+                <div class="col-lg-4">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-spinner me-2"></i>
+                                Being Stored ({{ fgs_stats.being_stored }})
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for phase in fgs_in_progress|slice:":5" %}
+                            <div class="batch-item">
+                                <div class="d-flex align-items-center">
+                                    <span class="status-indicator status-progress"></span>
+                                    <div class="flex-grow-1">
+                                        <strong>{{ phase.bmr.batch_number }}</strong>
+                                        <br><small class="text-muted">{{ phase.bmr.product.product_name }}</small>
+                                        <br><small class="text-info">Started: {{ phase.started_date|date:"M d, H:i" }}</small>
+                                    </div>
+                                    <small class="text-muted">{{ phase.started_by.get_full_name|default:phase.started_by.username }}</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted text-center">Nothing being stored</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Recently Stored -->
+                <div class="col-lg-4">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Recently Stored
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for phase in recent_stored|slice:":5" %}
+                            <div class="batch-item">
+                                <div class="d-flex align-items-center">
+                                    <span class="status-indicator status-completed"></span>
+                                    <div class="flex-grow-1">
+                                        <strong>{{ phase.bmr.batch_number }}</strong>
+                                        <br><small class="text-muted">{{ phase.bmr.product.product_name }}</small>
+                                        <br><small class="text-success">Stored: {{ phase.completed_date|date:"M d, H:i" }}</small>
+                                    </div>
+                                    <small class="text-muted">{{ phase.completed_by.get_full_name|default:phase.completed_by.username }}</small>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted text-center">No recent activity</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Current Inventory by Product Type -->
+            <div id="inventory" class="row mb-4">
+                <div class="col-12">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-boxes me-2"></i>
+                                Current Inventory by Product Type
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for product in products_in_fgs %}
+                            <div class="product-group">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">
+                                        {{ product.bmr__product__product_name }}
+                                        <span class="badge bg-primary ms-2">{{ product.bmr__product__product_type|title }}</span>
+                                    </h6>
+                                    <div>
+                                        <span class="badge bg-success me-2">{{ product.batch_count }} batches</span>
+                                        <small class="text-muted">Latest: {{ product.latest_storage|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No products currently in FGS</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Releases Section -->
+            <div id="releases" class="row mb-4">
+                <div class="col-12">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-truck me-2"></i>
+                                Recent Product Releases
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_releases %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Batch Number</th>
+                                            <th>Quantity Released</th>
+                                            <th>Release Date</th>
+                                            <th>Authorized By</th>
+                                            <th>Customer/Destination</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for release in recent_releases %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ release.inventory.product.product_name }}</strong>
+                                                <br><small class="text-muted">{{ release.inventory.product.product_type|title }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ release.inventory.bmr.batch_number }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">{{ release.quantity_released }} {{ release.inventory.unit_of_measure }}</span>
+                                            </td>
+                                            <td>{{ release.release_date|date:"M d, Y H:i" }}</td>
+                                            <td>{{ release.authorized_by.get_full_name|default:release.authorized_by.username|default:"Not specified" }}</td>
+                                            <td>
+                                                {% if release.customer_name %}
+                                                <span class="badge bg-info">{{ release.customer_name }}</span>
+                                                {% if release.delivery_address %}
+                                                <br><small class="text-muted">{{ release.delivery_address|truncatewords:10 }}</small>
+                                                {% endif %}
+                                                {% else %}
+                                                <span class="text-muted">Not specified</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <a href="{% url 'fgs_management:release_list' %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-list me-2"></i>View All Releases
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No recent product releases</p>
+                                <a href="{% url 'fgs_management:inventory_list' %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-plus me-2"></i>Create Release
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity Timeline -->
+            <div id="recent" class="row">
+                <div class="col-12">
+                    <div class="card fgs-card">
+                        <div class="card-header bg-primary text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>
+                                Recent FGS Activity
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_stored %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>BMR Number</th>
+                                            <th>Product</th>
+                                            <th>Product Type</th>
+                                            <th>Batch Size</th>
+                                            <th>Stored By</th>
+                                            <th>Storage Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for phase in recent_stored %}
+                                        <tr>
+                                            <td><strong class="text-primary">{{ phase.bmr.batch_number }}</strong></td>
+                                            <td>{{ phase.bmr.product.product_name }}</td>
+                                            <td>
+                                                <span class="badge bg-info">{{ phase.bmr.product.product_type|title }}</span>
+                                            </td>
+                                            <td>{{ phase.bmr.batch_size }} {{ phase.bmr.batch_size_unit }}</td>
+                                            <td>{{ phase.completed_by.get_full_name|default:phase.completed_by.username }}</td>
+                                            <td>{{ phase.completed_date|date:"M d, Y H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'bmr:detail' phase.bmr.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No recent FGS activity</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh every 60 seconds
+setInterval(function() {
+    if (document.hasFocus()) {
+        window.location.reload();
+    }
+}, 60000);
+
+// Smooth scrolling for navigation
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
+
+// Initialize charts when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to ensure chart element exists
+    function ensureChartElement(elementId) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.error(`Chart element ${elementId} not found`);
+            return false;
+        }
+        return element.getContext('2d');
+    }
+
+    // Product Type Chart
+    const productTypeLabels = [];
+    const productTypeValues = [];
+    
+    {% for product_type, count in product_type_data.items %}
+    productTypeLabels.push('{{ product_type|title }}');
+    productTypeValues.push({{ count }});
+    {% endfor %}
+    
+    // If no data, add placeholder
+    if (productTypeLabels.length === 0) {
+        productTypeLabels.push('No Data');
+        productTypeValues.push(1);
+    }
+    
+    const productTypeData = {
+        labels: productTypeLabels,
+        datasets: [{
+            data: productTypeValues,
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const productTypeCtx = ensureChartElement('productTypeChart');
+    if (productTypeCtx) {
+        new Chart(productTypeCtx, {
+        type: 'doughnut',
+        data: productTypeData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                title: {
+                    display: true,
+                    text: 'Completed Batches by Product Type'
+                }
+            }
+        }
+    });
+    }
+    
+    // Weekly Production Trend Chart
+    const weeklyLabels = [];
+    const weeklyValues = [];
+    
+    {% for week, count in weekly_production.items %}
+    weeklyLabels.push('{{ week }}');
+    weeklyValues.push({{ count }});
+    {% endfor %}
+    
+    // If no data, add placeholder
+    if (weeklyLabels.length === 0) {
+        const today = new Date();
+        for (let i = 0; i < 4; i++) {
+            const date = new Date();
+            date.setDate(today.getDate() - (i * 7));
+            weeklyLabels.push(`Week ${i+1}`);
+            weeklyValues.push(0);
+        }
+        weeklyLabels.reverse();
+    }
+    
+    const weeklyTrendData = {
+        labels: weeklyLabels,
+        datasets: [{
+            label: 'Completed Batches',
+            data: weeklyValues,
+            fill: false,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.1,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)'
+        }]
+    };
+    
+    const weeklyTrendCtx = ensureChartElement('weeklyTrendChart');
+    if (weeklyTrendCtx) {
+        new Chart(weeklyTrendCtx, {
+        type: 'line',
+        data: weeklyTrendData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Batches'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Weekly Production Trend (Last 4 Weeks)'
+                }
+            }
+        }
+    });
+    }
+    
+    // QC Statistics Chart
+    const qcPassed = {{ qc_stats.passed|default:0 }};
+    const qcFailed = {{ qc_stats.failed|default:0 }};
+    
+    // If both values are 0, add placeholder data
+    let qcLabels = ['Passed', 'Failed'];
+    let qcValues = [qcPassed, qcFailed];
+    
+    if (qcPassed === 0 && qcFailed === 0) {
+        qcValues = [1, 1]; // Equal placeholder data
+    }
+    
+    const qcStatsData = {
+        labels: qcLabels,
+        datasets: [{
+            data: qcValues,
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.7)',
+                'rgba(220, 53, 69, 0.7)'
+            ],
+            borderColor: [
+                'rgba(40, 167, 69, 1)',
+                'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const qcStatsCtx = ensureChartElement('qcStatsChart');
+    if (qcStatsCtx) {
+        new Chart(qcStatsCtx, {
+        type: 'pie',
+        data: qcStatsData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                title: {
+                    display: true,
+                    text: 'QC Test Results'
+                }
+            }
+        }
+    });
+    }
+});
+</script>
+{% endblock %}

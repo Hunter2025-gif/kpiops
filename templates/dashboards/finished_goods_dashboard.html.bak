@@ -1,0 +1,474 @@
+{% extends 'base.html' %}
+
+{% block title %}Finished Goods Store Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-archive me-2"></i>Finished Goods Store Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">Finished Goods Storage Management</p>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">Welcome, {{ user.get_full_name|default:user.username }}</small><br>
+                    <small class="text-success">{{ user.get_role_display }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <a href="?detail=pending" class="text-decoration-none">
+                <div class="card bg-warning text-white dashboard-card" style="transition: transform 0.3s;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.pending_phases }}</h5>
+                                <p class="card-text">Pending Storage</p>
+                            </div>
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?detail=in_progress" class="text-decoration-none">
+                <div class="card bg-info text-white dashboard-card" style="transition: transform 0.3s;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.in_progress_phases }}</h5>
+                                <p class="card-text">In Storage</p>
+                            </div>
+                            <i class="fas fa-play fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?detail=completed_today" class="text-decoration-none">
+                <div class="card bg-success text-white dashboard-card" style="transition: transform 0.3s;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.completed_today }}</h5>
+                                <p class="card-text">Stored Today</p>
+                            </div>
+                            <i class="fas fa-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?detail=total_batches" class="text-decoration-none">
+                <div class="card bg-primary text-white dashboard-card" style="transition: transform 0.3s;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0">{{ stats.total_batches }}</h5>
+                                <p class="card-text">Total Batches</p>
+                            </div>
+                            <i class="fas fa-warehouse fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <style>
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+    </style>
+
+    {% if detail_view %}
+    <!-- Back button for detailed view -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'dashboards:finished_goods_dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <h4 class="mt-3">{{ detail_title }}</h4>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if not detail_view %}
+    <!-- Daily Progress -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Storage Progress</h5>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ daily_progress }}%" 
+                             aria-valuenow="{{ daily_progress }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ daily_progress|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ daily_progress|floatformat:1 }}% of today's finished goods stored</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Historical Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Last 7 Days Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 220px;">
+                        <canvas id="dailyCompletionsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes me-2"></i>Products in FGS
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 220px;">
+                        <canvas id="productTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if recent_completed %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-truck-loading me-2"></i>Recently Stored Products
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Batch #</th>
+                                    <th>Product</th>
+                                    <th>Storage Date</th>
+                                    <th>Stored By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for phase in recent_completed %}
+                                <tr>
+                                    <td><strong>{{ phase.bmr.batch_number }}</strong></td>
+                                    <td>{{ phase.bmr.product.product_name }}</td>
+                                    <td>{{ phase.completed_date|date:"M d, Y H:i" }}</td>
+                                    <td>{{ phase.completed_by.get_full_name|default:phase.completed_by.username }}</td>
+                                    <td>
+                                        <a href="{% url 'bmr:detail' phase.bmr.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    
+    <!-- Finished Goods Storage Queue -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        {% if detail_title %}{{ detail_title }}{% else %}Finished Goods Storage Queue{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if my_phases %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="fgsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Batch #</th>
+                                        <th>Product</th>
+                                        <th>Phase</th>
+                                        <th>Status</th>
+                                        <th>{% if detail_view == 'completed_today' or detail_view == 'total_batches' %}Completed{% else %}Started{% endif %}</th>
+                                        {% if detail_view == 'completed_today' or detail_view == 'total_batches' %}
+                                        <th>Storage Time</th>
+                                        <th>Location</th>
+                                        {% else %}
+                                        <th>Priority</th>
+                                        {% endif %}
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for phase in my_phases %}
+                                    {% if phase.phase.phase_name == 'finished_goods_store' %}
+                                    <tr class="{% if phase.status == 'completed' %}bg-light{% endif %}">
+                                        <td>
+                                            <strong>{{ phase.bmr.batch_number }}</strong>
+                                        </td>
+                                        <td>
+                                            {{ phase.bmr.product.product_name }}
+                                            <br>
+                                            <small class="text-muted">{{ phase.bmr.product.get_product_type_display }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ phase.display_name|default:phase.phase.phase_name|title }}</span>
+                                        </td>
+                                        <td>
+                                            {% if phase.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif phase.status == 'in_progress' %}
+                                                <span class="badge bg-info">In Storage</span>
+                                            {% elif phase.status == 'completed' %}
+                                                <span class="badge bg-success">Stored</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ phase.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if detail_view == 'completed_today' or detail_view == 'total_batches' %}
+                                                {% if phase.completed_date %}
+                                                    {{ phase.completed_date|date:"M d, H:i" }}
+                                                    <br>
+                                                    <small class="text-muted">by {{ phase.completed_by.get_full_name|default:phase.completed_by.username }}</small>
+                                                {% else %}
+                                                    <span class="text-muted">Not completed</span>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if phase.started_date %}
+                                                    {{ phase.started_date|date:"M d, H:i" }}
+                                                {% else %}
+                                                    <span class="text-muted">Not started</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        
+                                        {% if detail_view == 'completed_today' or detail_view == 'total_batches' %}
+                                        <td>
+                                            {% if phase.completed_date and phase.started_date %}
+                                                {% with time_diff=phase.completed_date|timeuntil:phase.started_date %}
+                                                    {{ time_diff }}
+                                                {% endwith %}
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if phase.operator_comments %}
+                                                {{ phase.operator_comments }}
+                                            {% else %}
+                                                <span class="text-muted">Main Warehouse</span>
+                                            {% endif %}
+                                        </td>
+                                        {% else %}
+                                        <td>
+                                            {% if phase.bmr.created_date|timesince|slice:":1" == "0" %}
+                                                <span class="badge bg-danger">Urgent</span>
+                                            {% elif phase.bmr.created_date|timesince|slice:":1" == "1" %}
+                                                <span class="badge bg-warning">High</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Normal</span>
+                                            {% endif %}
+                                        </td>
+                                        {% endif %}
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'bmr:detail' phase.bmr.pk %}" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                                {% if phase.status == 'pending' %}
+                                                <button class="btn btn-outline-success btn-sm"
+                                                        onclick="startStorage('{{ phase.bmr.pk }}')">
+                                                    <i class="fas fa-play"></i> Start
+                                                </button>
+                                                {% elif phase.status == 'in_progress' %}
+                                                <button class="btn btn-outline-success btn-sm"
+                                                        onclick="completeStorage('{{ phase.bmr.pk }}')">
+                                                    <i class="fas fa-check"></i> Store
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="{% if detail_view == 'completed_today' or detail_view == 'total_batches' %}8{% else %}7{% endif %}" class="text-center text-muted py-5">
+                                            <i class="fas fa-archive fa-3x text-muted mb-3"></i><br>
+                                            No finished goods {% if detail_view %}found for this selection{% else %}pending storage at the moment{% endif %}.<br>
+                                            <small>{% if detail_view %}Try a different selection or{% else %}Check back later for{% endif %} new storage requests.</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function startStorage(bmrId) {
+    if (confirm('Start finished goods storage for this BMR?')) {
+        window.location.href = `/bmr/${bmrId}/start-phase/finished_goods_store/`;
+    }
+}
+
+function completeStorage(bmrId) {
+    const locationInput = prompt('Enter storage location (e.g., "Main Warehouse Section A", "Cold Storage"):');
+    if (locationInput !== null) {
+        window.location.href = `/bmr/${bmrId}/complete-phase/finished_goods_store/?comments=${encodeURIComponent(locationInput)}`;
+    }
+}
+
+// Initialize DataTable for better filtering and sorting
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if the table exists
+    if (document.getElementById('fgsTable')) {
+        // Load DataTables if needed
+        if (typeof $.fn.dataTable !== 'undefined') {
+            $('#fgsTable').DataTable({
+                "order": [],
+                "pageLength": 10,
+                "lengthMenu": [5, 10, 25, 50],
+                "language": {
+                    "search": "Quick Search:",
+                    "zeroRecords": "No matching records found",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                }
+            });
+        }
+    }
+    
+    // Daily Completions Chart
+    const dailyChartElement = document.getElementById('dailyCompletionsChart');
+    if (dailyChartElement) {
+        // Get data from backend
+        const dailyData = {
+            {% for day, count in stats.daily_history.items %}
+                '{{ day }}': {{ count }},
+            {% endfor %}
+        };
+        
+        const labels = Object.keys(dailyData);
+        const data = Object.values(dailyData);
+        
+        new Chart(dailyChartElement, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Batches Stored',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Product Type Chart
+    const productChartElement = document.getElementById('productTypeChart');
+    if (productChartElement) {
+        // Get data from backend
+        const productTypes = {
+            {% for type, count in stats.product_types.items %}
+                '{{ type }}': {{ count }},
+            {% endfor %}
+        };
+        
+        const labels = Object.keys(productTypes);
+        const data = Object.values(productTypes);
+        const backgroundColors = [
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)'
+        ];
+        
+        new Chart(productChartElement, {
+            type: 'doughnut',
+            data: {
+                labels: labels.map(label => {
+                    switch(label) {
+                        case 'tablet': return 'Tablets';
+                        case 'capsule': return 'Capsules';
+                        case 'liquid': return 'Liquids';
+                        case 'ointment': return 'Ointments';
+                        default: return label.charAt(0).toUpperCase() + label.slice(1);
+                    }
+                }),
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors.slice(0, data.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

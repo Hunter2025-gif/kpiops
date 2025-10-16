@@ -1,0 +1,188 @@
+{% extends "dashboards/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Admin Machine Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{{ page_title }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:admin_dashboard' %}">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active">Machine Management</li>
+    </ol>
+
+    <!-- Machine Status Overview -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-cogs me-1"></i>
+                    Machine Status Overview
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ all_machines.count }}</h2>
+                                    <p class="text-center mb-0">Total Machines</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-warning text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ total_breakdowns }}</h2>
+                                    <p class="text-center mb-0">Total Breakdowns</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-exchange-alt me-1"></i>
+                    Changeover & Maintenance
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-info text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ total_changeovers }}</h2>
+                                    <p class="text-center mb-0">Total Changeovers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white mb-4">
+                                <div class="card-body">
+                                    <h2 class="text-center">{{ recent_breakdowns.count }}</h2>
+                                    <p class="text-center mb-0">Recent Breakdowns</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Machine Management Actions -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-cog me-1"></i>
+            Machine Management Actions
+        </div>
+        <div class="card-body">
+            <a href="/admin/workflow/machine/add/" class="btn btn-success mb-3">
+                <i class="fas fa-plus-circle"></i> Add New Machine
+            </a>
+        </div>
+    </div>
+
+    <!-- All Machines Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            All Machines
+        </div>
+        <div class="card-body">
+            <table id="machinesTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Machine ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Last Maintenance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for machine in all_machines %}
+                    <tr>
+                        <td>{{ machine.id }}</td>
+                        <td>{{ machine.name }}</td>
+                        <td>{{ machine.machine_type }}</td>
+                        <td>
+                            {% if machine.status == 'operational' %}
+                            <span class="badge bg-success">Operational</span>
+                            {% elif machine.status == 'maintenance' %}
+                            <span class="badge bg-warning">Maintenance</span>
+                            {% elif machine.status == 'breakdown' %}
+                            <span class="badge bg-danger">Breakdown</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ machine.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ machine.last_maintenance_date|default:"Not recorded" }}</td>
+                        <td>
+                            <a href="/admin/workflow/machine/{{ machine.id }}/change/" class="btn btn-primary btn-sm">Details</a>
+                            <a href="/admin/workflow/machine/{{ machine.id }}/change/" class="btn btn-warning btn-sm">Maintenance</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">No machines available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Breakdowns -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Recent Breakdowns
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Machine</th>
+                        <th>BMR</th>
+                        <th>Duration</th>
+                        <th>Reported By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for breakdown in recent_breakdowns %}
+                    <tr>
+                        <td>{{ breakdown.breakdown_start_time|date:"M d, Y H:i" }}</td>
+                        <td>{{ breakdown.machine_used.name }}</td>
+                        <td>{{ breakdown.bmr.batch_number }}</td>
+                        <td>
+                            {% if breakdown.breakdown_end_time %}
+                                {{ breakdown.breakdown_start_time|timesince:breakdown.breakdown_end_time }}
+                            {% else %}
+                                Ongoing
+                            {% endif %}
+                        </td>
+                        <td>{{ breakdown.started_by.get_full_name }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No recent breakdowns</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#machinesTable').DataTable();
+    });
+</script>
+{% endblock %}

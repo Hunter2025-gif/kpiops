@@ -1,0 +1,135 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Reject BMR Request{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Reject BMR Request</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:qa_dashboard' %}">QA Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'bmr:bmr_request_list' %}">BMR Requests</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'bmr:bmr_request_detail' bmr_request.id %}">Request Details</a></li>
+        <li class="breadcrumb-item active">Reject Request</li>
+    </ol>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Request Details Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <i class="fas fa-clipboard-list me-1"></i>
+                    BMR Request Summary
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th width="40%">Request ID:</th>
+                            <td>{{ bmr_request.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Product:</th>
+                            <td>{{ bmr_request.product.product_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Requested By:</th>
+                            <td>{{ bmr_request.requested_by.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Required Date:</th>
+                            <td>{{ bmr_request.required_date|date:"F d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Priority:</th>
+                            <td>
+                                {% if bmr_request.priority == 'low' %}
+                                    <span class="badge bg-info">Low</span>
+                                {% elif bmr_request.priority == 'medium' %}
+                                    <span class="badge bg-primary">Medium</span>
+                                {% elif bmr_request.priority == 'high' %}
+                                    <span class="badge bg-warning">High</span>
+                                {% elif bmr_request.priority == 'urgent' %}
+                                    <span class="badge bg-danger">Urgent</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Quantity Required:</th>
+                            <td>{{ bmr_request.quantity_required }} {{ bmr_request.quantity_unit }}</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="card bg-light mt-3">
+                        <div class="card-header">
+                            <i class="fas fa-comment-dots me-1"></i> Reason for Request
+                        </div>
+                        <div class="card-body">
+                            <p>{{ bmr_request.reason|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <!-- Rejection Form Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-times-circle me-1"></i>
+                    Reject BMR Request
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            You are about to reject this BMR request. This action cannot be undone.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="rejection_reason" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="rejection_reason" name="rejection_reason" 
+                                      rows="6" required
+                                      placeholder="Please provide a detailed explanation for rejecting this request..."></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a reason for rejecting this request.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'bmr:bmr_request_detail' bmr_request.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i> Reject Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Activate form validation
+        (function() {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+    });
+</script>
+{% endblock %}

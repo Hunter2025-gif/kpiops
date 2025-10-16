@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Packaging Store Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block content %}
+{% include 'notifications/phase_notification.html' %}
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-primary mb-0">
+                        <i class="fas fa-box-open me-2"></i>Packaging Store Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">Packaging Material Release Management</p>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">Welcome, {{ user.get_full_name|default:user.username }}</small><br>
+                    <small class="text-success">{{ user.get_role_display }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.pending_phases }}</h5>
+                            <p class="card-text">Pending Releases</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.in_progress_phases }}</h5>
+                            <p class="card-text">In Progress</p>
+                        </div>
+                        <i class="fas fa-play fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.completed_today }}</h5>
+                            <p class="card-text">Released Today</p>
+                        </div>
+                        <i class="fas fa-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">{{ stats.total_batches }}</h5>
+                            <p class="card-text">Total Batches</p>
+                        </div>
+                        <i class="fas fa-box fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Progress -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Release Progress</h5>
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ daily_progress }}%" 
+                             aria-valuenow="{{ daily_progress }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ daily_progress|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ daily_progress|floatformat:1 }}% of today's packaging releases completed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Packaging Material Release Queue -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>Packaging Material Release Queue
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if my_phases %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Batch #</th>
+                                        <th>Product</th>
+                                        <th>Phase</th>
+                                        <th>Batch Size</th>
+                                        <th>Packaging Units Needed</th>
+                                        <th>Status</th>
+                                        <th>Started</th>
+                                        <th>Priority</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for phase in my_phases %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ phase.bmr.batch_number }}</strong>
+                                        </td>
+                                        <td>{{ phase.bmr.product.product_name }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ phase.phase.phase_name|title }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ phase.bmr.batch_size|floatformat:0 }} {{ phase.bmr.batch_size_unit }}</strong>
+                                        </td>
+                                        <td>
+                                            {% if phase.bmr.product.packaging_size_in_units %}
+                                                <span class="badge bg-info">
+                                                    {% widthratio phase.bmr.batch_size phase.bmr.product.packaging_size_in_units 1 %} packages
+                                                </span>
+                                                <br><small class="text-muted">
+                                                    {{ phase.bmr.product.packaging_size_in_units|floatformat:0 }} units each
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">Not set</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if phase.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif phase.status == 'in_progress' %}
+                                                <span class="badge bg-info">In Progress</span>
+                                            {% else %}
+                                                <span class="badge bg-success">{{ phase.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if phase.started_date %}
+                                                {{ phase.started_date|date:"M d, H:i" }}
+                                            {% else %}
+                                                <span class="text-muted">Not started</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if phase.bmr.created_date|timesince|slice:':1' == "0" %}
+                                                <span class="badge bg-danger">Urgent</span>
+                                            {% elif phase.bmr.created_date|timesince|slice:':1' == "1" %}
+                                                <span class="badge bg-warning">High</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Normal</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'bmr:detail' phase.bmr.pk %}" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                                {% if phase.status == 'pending' %}
+                                                <button class="btn btn-outline-success btn-sm"
+                                                        onclick="startRelease('{{ phase.bmr.pk }}')">
+                                                    <i class="fas fa-play"></i> Start
+                                                </button>
+                                                {% elif phase.status == 'in_progress' %}
+                                                <button class="btn btn-outline-success btn-sm"
+                                                        onclick="completeRelease('{{ phase.bmr.pk }}')">
+                                                    <i class="fas fa-check"></i> Release
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No packaging material releases pending at the moment.</p>
+                            <small class="text-muted">Check back later for new release requests.</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- My History Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-history"></i> My History</span>
+                </div>
+                <div class="card-body">
+                    <div style="max-height: 180px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Batch</th>
+                                    <th>Phase</th>
+                                </tr>
+                            </thead>
+                            <tbody id="operator-history">
+                                {% for entry in operator_history %}
+                                <tr><td>{{ entry.date }}</td><td>{{ entry.batch }}</td><td>{{ entry.phase }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">No history found.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+function startRelease(bmrId) {
+    if (confirm('Start packaging material release for this BMR?')) {
+        window.location.href = `/bmr/${bmrId}/start-phase/packaging_material_release/`;
+    }
+}
+
+function completeRelease(bmrId) {
+    const comments = prompt('Enter release comments (optional):');
+    if (comments !== null) {
+        window.location.href = `/bmr/${bmrId}/complete-phase/packaging_material_release/?comments=${encodeURIComponent(comments)}`;
+    }
+}
+</script>
+{% endblock %}

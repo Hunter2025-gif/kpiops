@@ -1,0 +1,446 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - KPI{% endblock %}
+
+{% block extra_css %}
+<!-- Force dropdown visibility and center titles -->
+<style>
+    /* CENTER TITLES PROPERLY */
+    .dashboard-header {
+        text-align: center !important;
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Page layout */
+    .dashboard-container {
+        display: flex;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .sidebar {
+        width: 300px;
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 30px 25px;
+        box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+    }
+    
+    .content-area {
+        flex: 1;
+        padding: 30px;
+    }
+    
+    .sidebar h2 {
+        color: #ecf0f1;
+        margin-bottom: 30px;
+        font-weight: 300;
+        font-size: 1.8rem;
+    }
+    
+    .sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sidebar li {
+        margin-bottom: 20px;
+    }
+    
+    .sidebar a {
+        color: #bdc3c7;
+        text-decoration: none;
+        display: block;
+        padding: 12px 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .sidebar a:hover, .sidebar a.active {
+        background: rgba(52, 152, 219, 0.2);
+        color: #3498db;
+        transform: translateX(5px);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: none;
+        padding: 20px;
+    }
+    
+    .card-header h5 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .card-body {
+        padding: 25px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        background-color: #ffffff;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 992px) {
+        .dashboard-container {
+            flex-direction: column;
+        }
+        
+        .sidebar {
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .content-area {
+            padding: 20px;
+        }
+        
+        .stats-card {
+            margin-bottom: 20px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .metric-value {
+            font-size: 2rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+    <!-- Sidebar with deep blue color -->
+    <div class="sidebar" style="background-color: #1a365d;">
+        <div class="sidebar-header">
+            <h4>KPI Admin</h4>
+        </div>
+        
+        <div class="sidebar-section">Main</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'dashboards:admin_dashboard' %}" class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="content-area">
+        <!-- Page Header -->
+        <div class="dashboard-header text-center mb-4">
+            <h1 class="mb-2" style="text-align: center !important;">Admin Dashboard</h1>
+            <p class="mb-0" style="text-align: center !important;">Kampala Pharmaceutical Industries - Operations Overview</p>
+        </div>
+
+        <!-- Key Metrics Section -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+                    <div class="metric-value" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">{{ total_bmrs|default:"13" }}</div>
+                    <div class="metric-label" style="font-size: 0.9rem; opacity: 0.9;">Total BMRs</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+                    <div class="metric-value" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">{{ active_batches|default:"13" }}</div>
+                    <div class="metric-label" style="font-size: 0.9rem; opacity: 0.9;">Active Batches</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+                    <div class="metric-value" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">0</div>
+                    <div class="metric-label" style="font-size: 0.9rem; opacity: 0.9;">Completed Batches</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+                    <div class="metric-value" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">0</div>
+                    <div class="metric-label" style="font-size: 0.9rem; opacity: 0.9;">Rejected Batches</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4">
+                <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px;">
+                        <h5 style="margin: 0; color: #2c3e50; font-weight: 600;">Production by Product Type</h5>
+                    </div>
+                    <div class="card-body" style="padding: 25px;">
+                        <div class="chart-container" style="position: relative; height: 300px; width: 100%; background-color: #ffffff;">
+                            <canvas id="productTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px;">
+                        <h5 style="margin: 0; color: #2c3e50; font-weight: 600;">Phase Completion Status</h5>
+                    </div>
+                    <div class="card-body" style="padding: 25px;">
+                        <div class="chart-container" style="position: relative; height: 300px; width: 100%; background-color: #ffffff;">
+                            <canvas id="phaseStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4">
+                <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px;">
+                        <h5 style="margin: 0; color: #2c3e50; font-weight: 600;">Weekly Production Trend</h5>
+                    </div>
+                    <div class="card-body" style="padding: 25px;">
+                        <div class="chart-container" style="position: relative; height: 300px; width: 100%; background-color: #ffffff;">
+                            <canvas id="weeklyTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px;">
+                        <h5 style="margin: 0; color: #2c3e50; font-weight: 600;">QC Status Overview</h5>
+                    </div>
+                    <div class="card-body" style="padding: 25px;">
+                        <div class="chart-container" style="position: relative; height: 300px; width: 100%; background-color: #ffffff;">
+                            <canvas id="qcStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- CHARTS ONLY - DROPDOWN HANDLED BY BASE TEMPLATE -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard script loaded');
+
+    // Initialize Product Type Chart
+    const productTypeCtx = document.getElementById('productTypeChart');
+    if (productTypeCtx) {
+        new Chart(productTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tablets', 'Capsules', 'Ointments', 'Liquids'],
+                datasets: [{
+                    data: [8, 3, 2, 0],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Phase Status Chart
+    const phaseStatusCtx = document.getElementById('phaseStatusChart');
+    if (phaseStatusCtx) {
+        new Chart(phaseStatusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Passed', 'Failed', 'Pending'],
+                datasets: [{
+                    data: [75, 5, 20],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Weekly Trend Chart
+    const weeklyTrendCtx = document.getElementById('weeklyTrendChart');
+    if (weeklyTrendCtx) {
+        new Chart(weeklyTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Started',
+                    data: [5, 8, 6, 4],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Completed',
+                    data: [3, 6, 4, 2],
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize QC Status Chart
+    const qcStatusCtx = document.getElementById('qcStatusChart');
+    if (qcStatusCtx) {
+        new Chart(qcStatusCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Pending QC', 'In Progress', 'Approved', 'Rejected'],
+                datasets: [{
+                    label: 'Batches',
+                    data: [3, 5, 4, 1],
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(23, 162, 184, 0.8)',
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

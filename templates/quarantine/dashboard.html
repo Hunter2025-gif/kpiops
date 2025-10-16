@@ -1,0 +1,476 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Quarantine Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Quarantine Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:dashboard_home' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Quarantine</li>
+    </ol>
+
+    <!-- Main Layout with Sidebar -->
+    <div class="row">
+        <!-- Left Sidebar - Phase Filter -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Filter by Phase
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="?phase=all" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if selected_phase == 'all' %}active{% endif %}">
+                            <span><i class="fas fa-list me-2"></i>All Phases</span>
+                            <span class="badge bg-primary rounded-pill">{{ total_in_quarantine }}</span>
+                        </a>
+                        {% for phase_data in phase_counts %}
+                        <a href="?phase={{ phase_data.phase_name }}" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if selected_phase == phase_data.phase_name %}active{% endif %} {% if not phase_data.has_batches %}text-muted{% endif %}">
+                            <span>
+                                <i class="fas fa-cog me-2"></i>{{ phase_data.display_name }}
+                            </span>
+                            <span class="badge {% if phase_data.has_batches %}bg-secondary{% else %}bg-light text-dark{% endif %} rounded-pill">{{ phase_data.count }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total in Quarantine</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ total_in_quarantine }}</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-pause-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Awaiting Decision</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ awaiting_decision }}</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Samples in Progress</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ samples_in_progress }}</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-vial fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Avg Quarantine Time</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ avg_quarantine_time }}h</div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <!-- Phase Selection Header -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            {% if selected_phase == 'all' %}
+                                <i class="fas fa-list me-2"></i>All Phases - Quarantine Batches
+                            {% else %}
+                                <i class="fas fa-cog me-2"></i>{{ selected_phase|title }} Phase - Quarantine Batches
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">
+                            Showing {{ quarantine_batches|length }} of {{ total_in_quarantine }} batches
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Quarantine Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Batches in Quarantine
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="quarantineTable">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Batch Number</th>
+                            <th>Current Phase</th>
+                            <th>Status</th>
+                            <th>Quarantine Time</th>
+                            <th>Sample Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in quarantine_batches %}
+                        <tr>
+                            <td>{{ batch.bmr.product.product_name }}</td>
+                            <td>{{ batch.bmr.batch_number }}</td>
+                            <td>{{ batch.current_phase.phase_name|title }}</td>
+                            <td>
+                                {% if batch.status == 'quarantined' %}
+                                    <span class="badge bg-warning">Quarantined</span>
+                                {% elif batch.status == 'sample_requested' %}
+                                    <span class="badge bg-info">Sample Requested</span>
+                                {% elif batch.status == 'sample_in_qa' %}
+                                    <span class="badge bg-primary">Sample with QA</span>
+                                {% elif batch.status == 'sample_in_qc' %}
+                                    <span class="badge bg-secondary">Sample with QC</span>
+                                {% elif batch.status == 'sample_approved' %}
+                                    <span class="badge bg-success">Sample Approved</span>
+                                {% elif batch.status == 'sample_failed' %}
+                                    <span class="badge bg-danger">Sample Failed</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ batch.quarantine_duration_hours }}h</td>
+                            <td>{{ batch.sample_count }}/2</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'quarantine:details' batch.id %}" 
+                                       class="btn btn-outline-info btn-sm"
+                                       title="View Quarantine Details">
+                                        <i class="fas fa-eye"></i> Details
+                                    </a>
+                                    
+                                    {% if batch.can_request_sample %}
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            onclick="requestSample({{ batch.id }})"
+                                            title="Request Sample">
+                                        <i class="fas fa-vial"></i> Request Sample
+                                    </button>
+                                    {% endif %}
+                                    
+                                    {% if batch.can_proceed_to_next_phase %}
+                                    <button class="btn btn-success btn-sm" 
+                                            onclick="proceedToNextPhase({{ batch.id }})"
+                                            title="Proceed to Next Phase">
+                                        <i class="fas fa-arrow-right"></i> Next Phase
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No batches in quarantine</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Sample Requests -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-history me-1"></i>
+            Recent Sample Requests
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Batch</th>
+                            <th>Product</th>
+                            <th>Sample #</th>
+                            <th>Requested</th>
+                            <th>QA Processed</th>
+                            <th>QC Status</th>
+                            <th>Turnaround Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sample in recent_samples %}
+                        <tr>
+                            <td>{{ sample.quarantine_batch.bmr.batch_number }}</td>
+                            <td>{{ sample.quarantine_batch.bmr.product.product_name }}</td>
+                            <td>{{ sample.sample_number }}</td>
+                            <td>{{ sample.request_date|date:"M d, H:i" }}</td>
+                            <td>
+                                {% if sample.sample_date %}
+                                    {{ sample.sample_date|date:"M d, H:i" }}
+                                {% else %}
+                                    <span class="text-muted">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sample.qc_status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif sample.qc_status == 'failed' %}
+                                    <span class="badge bg-danger">Failed</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sample.total_turnaround_time_hours %}
+                                    {{ sample.total_turnaround_time_hours }}h
+                                {% else %}
+                                    <span class="text-muted">In Progress</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'quarantine:details' sample.quarantine_batch.id %}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i> Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No recent sample requests</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BMR Quarantine History -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-history me-1"></i>
+            BMR Quarantine History (All Phases)
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="bmrHistoryTable">
+                    <thead>
+                        <tr>
+                            <th>Batch Number</th>
+                            <th>Product</th>
+                            <th>Phases</th>
+                            <th>First Quarantine</th>
+                            <th>Last Release</th>
+                            <th>Total Time</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for history in bmr_quarantine_history %}
+                        <tr>
+                            <td><strong>{{ history.batch_number }}</strong></td>
+                            <td>{{ history.product_name }}</td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for phase in history.phases %}
+                                        <span class="badge bg-secondary">
+                                            {{ phase.current_phase.phase_name|title }}
+                                            {% if phase.released_date %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% else %}
+                                                <i class="fas fa-clock text-warning"></i>
+                                            {% endif %}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>{{ history.first_quarantine|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if history.last_release %}
+                                    {{ history.last_release|date:"M d, Y H:i" }}
+                                {% else %}
+                                    <span class="text-warning">In Progress</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ history.total_time }}h</td>
+                            <td>
+                                {% if history.still_in_quarantine %}
+                                    <span class="badge bg-warning">In Quarantine</span>
+                                {% else %}
+                                    <span class="badge bg-success">Released</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" 
+                                        data-bs-target="#history-{{ history.bmr.id }}" aria-expanded="false">
+                                    <i class="fas fa-info-circle"></i> Phase Details
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="history-{{ history.bmr.id }}">
+                            <td colspan="8">
+                                <div class="card card-body bg-light">
+                                    <h6 class="card-subtitle mb-2 text-muted">Quarantine Phase History</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Phase</th>
+                                                    <th>Start Date</th>
+                                                    <th>End Date</th>
+                                                    <th>Duration</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for phase in history.phases %}
+                                                <tr>
+                                                    <td>{{ phase.bmr.product.product_name }}</td>
+                                                    <td>{{ phase.current_phase.phase_name|title }}</td>
+                                                    <td>{{ phase.quarantine_date|date:"M d, H:i" }}</td>
+                                                    <td>
+                                                        {% if phase.released_date %}
+                                                            {{ phase.released_date|date:"M d, H:i" }}
+                                                        {% else %}
+                                                            <span class="text-warning">In Progress</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ phase.quarantine_duration_hours }}h</td>
+                                                    <td>
+                                                        {% if phase.status == 'quarantined' %}
+                                                            <span class="badge bg-warning">Quarantined</span>
+                                                        {% elif phase.status == 'sample_requested' %}
+                                                            <span class="badge bg-info">Sample Requested</span>
+                                                        {% elif phase.status == 'sample_in_qa' %}
+                                                            <span class="badge bg-primary">Sample with QA</span>
+                                                        {% elif phase.status == 'sample_in_qc' %}
+                                                            <span class="badge bg-secondary">Sample with QC</span>
+                                                        {% elif phase.status == 'sample_approved' %}
+                                                            <span class="badge bg-success">Sample Approved</span>
+                                                        {% elif phase.status == 'sample_failed' %}
+                                                            <span class="badge bg-danger">Sample Failed</span>
+                                                        {% elif phase.status == 'released' %}
+                                                            <span class="badge bg-success">Released</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <a href="{% url 'quarantine:details' phase.id %}" class="btn btn-sm btn-outline-info">
+                                                            <i class="fas fa-eye"></i> Details
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No BMR quarantine history found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+        </div> <!-- Close main content -->
+    </div> <!-- Close row with sidebar -->
+</div> <!-- Close container -->
+
+<!-- JavaScript for Actions -->
+<script>
+function requestSample(quarantineId) {
+    if (confirm('Are you sure you want to request a sample for this batch?')) {
+        fetch(`/quarantine/request-sample/${quarantineId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while requesting the sample.');
+        });
+    }
+}
+
+function proceedToNextPhase(quarantineId) {
+    if (confirm('Are you sure you want to proceed this batch to the next phase?')) {
+        fetch(`/quarantine/proceed/${quarantineId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while proceeding to the next phase.');
+        });
+    }
+}
+
+// Add CSRF token to all requests
+document.addEventListener('DOMContentLoaded', function() {
+    // Create CSRF token input if it doesn't exist
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+});
+</script>
+{% endblock %}

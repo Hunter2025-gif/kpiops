@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .dashboard-container {
+            display: flex;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #0056b3;
+            color: white;
+            padding: 20px;
+            height: 100vh;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .content-section {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        .section-link {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        
+        .section-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>Admin Dashboard</h2>
+            <a href="javascript:void(0);" class="section-link active" id="dashboard-link" data-section="dashboard">Dashboard Overview</a>
+            <a href="javascript:void(0);" class="section-link" id="machine-link" data-section="machine-management">Machine Management</a>
+            <a href="javascript:void(0);" class="section-link" id="quality-link" data-section="quality-control">Quality Control</a>
+            <a href="javascript:void(0);" class="section-link" id="inventory-link" data-section="inventory-status">Inventory Status</a>
+            <a href="javascript:void(0);" class="section-link" id="user-link" data-section="user-management">User Management</a>
+            <a href="javascript:void(0);" class="section-link" id="system-link" data-section="system-health">System Health</a>
+        </div>
+        
+        <div class="content">
+            <div class="content-section active" id="dashboard">
+                <h2>Dashboard Overview</h2>
+                <p>This is the main dashboard section.</p>
+            </div>
+            
+            <div class="content-section" id="machine-management">
+                <h2>Machine Management</h2>
+                <p>Machine management content goes here.</p>
+            </div>
+            
+            <div class="content-section" id="quality-control">
+                <h2>Quality Control</h2>
+                <p>Quality control content goes here.</p>
+            </div>
+            
+            <div class="content-section" id="inventory-status">
+                <h2>Inventory Status</h2>
+                <p>Inventory status content goes here.</p>
+            </div>
+            
+            <div class="content-section" id="user-management">
+                <h2>User Management</h2>
+                <p>User management content goes here.</p>
+            </div>
+            
+            <div class="content-section" id="system-health">
+                <h2>System Health</h2>
+                <p>System health content goes here.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded - setting up dashboard');
+            
+            // Get all section links
+            const sectionLinks = document.querySelectorAll('.section-link');
+            
+            // Add click event listeners to all links
+            sectionLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get the section ID from data-section attribute
+                    const sectionId = this.getAttribute('data-section');
+                    console.log('Link clicked:', sectionId);
+                    
+                    // Hide all sections
+                    document.querySelectorAll('.content-section').forEach(section => {
+                        section.style.display = 'none';
+                        section.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all links
+                    sectionLinks.forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    
+                    // Show the selected section
+                    const targetSection = document.getElementById(sectionId);
+                    if (targetSection) {
+                        targetSection.style.display = 'block';
+                        targetSection.classList.add('active');
+                        console.log('Showing section:', sectionId);
+                    } else {
+                        console.error('Section not found:', sectionId);
+                    }
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    return false;
+                });
+            });
+            
+            console.log('Dashboard setup complete');
+        });
+    </script>
+</body>
+</html>

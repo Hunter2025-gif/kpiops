@@ -1,0 +1,196 @@
+{% extends "dashboards/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Admin Quality Control{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{{ page_title }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboards:admin_dashboard' %}">Admin Dashboard</a></li>
+        <li class="breadcrumb-item active">Quality Control</li>
+    </ol>
+
+    <!-- QC Stats Overview -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h2 class="text-center">{{ all_checkpoints }}</h2>
+                    <p class="text-center mb-0">Total QC Checkpoints</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h2 class="text-center">{{ passed_checkpoints }}</h2>
+                    <p class="text-center mb-0">Passed Checkpoints</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <h2 class="text-center">{{ failed_checkpoints }}</h2>
+                    <p class="text-center mb-0">Failed Checkpoints</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <h2 class="text-center">{{ failure_rate }}%</h2>
+                    <p class="text-center mb-0">Failure Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QC Test Results Chart -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Test Results Distribution
+                </div>
+                <div class="card-body">
+                    <canvas id="qcResultsChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Monthly Test Volume
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyTestsChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent QC Checkpoints -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Recent Quality Checkpoints
+        </div>
+        <div class="card-body">
+            <table id="recentTestsTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>BMR</th>
+                        <th>Checkpoint</th>
+                        <th>Checked By</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for checkpoint in recent_checkpoints %}
+                    <tr>
+                        <td>{{ checkpoint.checked_date|date:"M d, Y H:i"|default:"Not completed" }}</td>
+                        <td>{{ checkpoint.phase_execution.bmr.batch_number }}</td>
+                        <td>{{ checkpoint.checkpoint_name }}</td>
+                        <td>{{ checkpoint.checked_by.get_full_name|default:"-" }}</td>
+                        <td>
+                            {% if checkpoint.is_within_spec == True %}
+                            <span class="badge bg-success">Passed</span>
+                            {% elif checkpoint.is_within_spec == False %}
+                            <span class="badge bg-danger">Failed</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'bmr:detail' checkpoint.phase_execution.bmr.id %}" class="btn btn-primary btn-sm">BMR Details</a>
+                                <a href="{% url 'reports:timeline_detail' checkpoint.phase_execution.bmr.id %}" class="btn btn-outline-primary btn-sm">Timeline</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">No quality checkpoints recorded</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#recentTestsTable').DataTable();
+        
+        // QC Results Distribution Chart
+        const qcResultsCtx = document.getElementById('qcResultsChart');
+        new Chart(qcResultsCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Passed', 'Failed'],
+                datasets: [{
+                    data: [{{ passed_checkpoints|default:0 }}, {{ failed_checkpoints|default:0 }}],
+                    backgroundColor: ['#28a745', '#dc3545'],
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'QC Test Results Distribution'
+                    }
+                }
+            }
+        });
+        
+        // Monthly Test Volume (Placeholder data - replace with real data)
+        const monthlyTestsCtx = document.getElementById('monthlyTestsChart');
+        new Chart(monthlyTestsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Passed Tests',
+                    backgroundColor: '#28a745',
+                    data: [15, 20, 18, 25, 22, 30],
+                }, {
+                    label: 'Failed Tests',
+                    backgroundColor: '#dc3545',
+                    data: [5, 3, 2, 4, 5, 6],
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Monthly QC Test Volume'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

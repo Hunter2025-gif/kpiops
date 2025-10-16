@@ -1,0 +1,440 @@
+{% extends 'dashboards/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Dispensing Manager Dashboard - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dispensing-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        padding: 20px 0;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .dispensing-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .dispensing-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card.green {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .stat-card.orange {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .stat-card.blue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .phase-card {
+        border-left: 4px solid #667eea;
+        background: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .phase-card:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .phase-card.pending {
+        border-left-color: #ffc107;
+    }
+    
+    .phase-card.in_progress {
+        border-left-color: #17a2b8;
+    }
+    
+    .phase-card.completed {
+        border-left-color: #28a745;
+    }
+    
+    .status-badge {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8em;
+    }
+    
+    .btn-action {
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .progress-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: conic-gradient(#28a745 0deg, #28a745 var(--progress), #e9ecef var(--progress), #e9ecef 360deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #28a745;
+        margin: 0 auto;
+    }
+    
+    .release-item {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .release-item:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dispensing-header text-center">
+        <div class="container">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-pills me-3"></i>
+                Dispensing Manager Dashboard
+            </h1>
+            <p class="lead mb-0">Material Dispensing for Production Operations</p>
+        </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card orange">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ stats.pending_phases }}</h4>
+                        <small>Pending Phases</small>
+                    </div>
+                    <i class="fas fa-clock fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card blue">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ stats.in_progress_phases }}</h4>
+                        <small>In Progress</small>
+                    </div>
+                    <i class="fas fa-spinner fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card green">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ stats.completed_today }}</h4>
+                        <small>Completed Today</small>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ stats.pending_material_releases|default:0 }}</h4>
+                        <small>Material Releases</small>
+                    </div>
+                    <i class="fas fa-truck fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Progress -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="dispensing-card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Daily Progress</h5>
+                    <div class="progress-circle" style="--progress: {{ daily_progress }}deg;">
+                        {{ daily_progress|floatformat:0 }}%
+                    </div>
+                    <p class="mt-3 mb-0">Keep up the great work!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material Releases Section -->
+    {% if received_releases %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dispensing-card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-truck me-2"></i>
+                        Received Material Releases - Ready for Dispensing
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for release in received_releases %}
+                    <div class="release-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h6 class="mb-1">{{ release.bmr.batch_number }}</h6>
+                                <small class="text-muted">{{ release.bmr.product.product_name }}</small>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="badge bg-info">{{ release.release_number }}</span>
+                                <br><small class="text-muted">Received: {{ release.received_date|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted">Product Type:</small>
+                                <br><span class="badge bg-secondary">{{ release.bmr.product.product_type|title }}</span>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <a href="#" class="btn btn-success btn-action">
+                                    <i class="fas fa-play me-2"></i>Start Dispensing
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- My Phases Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dispensing-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        My Dispensing Phases
+                        {% if my_phases %}
+                        <span class="badge bg-light text-dark ms-2">{{ my_phases|length }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if my_phases %}
+                    <div class="row">
+                        {% for phase in my_phases %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="phase-card {{ phase.status }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ phase.bmr.batch_number }}</h6>
+                                    <span class="status-badge 
+                                        {% if phase.status == 'pending' %}bg-warning text-dark
+                                        {% elif phase.status == 'in_progress' %}bg-info text-white
+                                        {% elif phase.status == 'completed' %}bg-success text-white
+                                        {% else %}bg-secondary text-white{% endif %}">
+                                        {{ phase.status|title }}
+                                    </span>
+                                </div>
+                                
+                                <p class="mb-2">
+                                    <small class="text-muted">Product:</small><br>
+                                    <strong>{{ phase.bmr.product.product_name }}</strong>
+                                </p>
+                                
+                                <p class="mb-2">
+                                    <small class="text-muted">Batch Size:</small><br>
+                                    <span class="text-primary">{{ phase.bmr.batch_size|floatformat:0 }} {{ phase.bmr.batch_size_unit }}</span>
+                                </p>
+                                
+                                {% if phase.bmr.product.packaging_size_in_units %}
+                                <p class="mb-2">
+                                    <small class="text-muted">Packaging Units Required:</small><br>
+                                    <span class="badge bg-success">
+                                        {% widthratio phase.bmr.batch_size phase.bmr.product.packaging_size_in_units 1 %} packages
+                                    </span>
+                                    <br><small class="text-muted">
+                                        ({{ phase.bmr.product.packaging_size_in_units|floatformat:0 }} units per package)
+                                    </small>
+                                </p>
+                                {% endif %}
+                                
+                                <p class="mb-2">
+                                    <small class="text-muted">Phase:</small><br>
+                                    <span class="badge bg-light text-dark">{{ phase.phase.phase_name|title }}</span>
+                                </p>
+                                
+                                {% if phase.status == 'pending' %}
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="phase_id" value="{{ phase.id }}">
+                                    <input type="hidden" name="action" value="start">
+                                    <button type="submit" class="btn btn-primary btn-sm btn-action w-100">
+                                        <i class="fas fa-play me-1"></i>Start Phase
+                                    </button>
+                                </form>
+                                {% elif phase.status == 'in_progress' %}
+                                <div class="mb-2">
+                                    <small class="text-muted">Started:</small><br>
+                                    <small>{{ phase.started_date|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="phase_id" value="{{ phase.id }}">
+                                    <input type="hidden" name="action" value="complete">
+                                    <div class="mb-2">
+                                        <textarea name="comments" class="form-control form-control-sm" 
+                                                  placeholder="Completion notes..." rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm btn-action w-100">
+                                        <i class="fas fa-check me-1"></i>Complete Phase
+                                    </button>
+                                </form>
+                                {% else %}
+                                <div class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    <small>Completed: {{ phase.completed_date|date:"M d, Y H:i" }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted">No Dispensing Phases Available</h4>
+                        <p class="text-muted mb-0">No phases are currently assigned to you for dispensing.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="dispensing-card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="#" class="btn btn-outline-primary w-100 btn-action">
+                                <i class="fas fa-search me-2"></i>Search BMR
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="#" class="btn btn-outline-info w-100 btn-action">
+                                <i class="fas fa-list me-2"></i>Material List
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="#" class="btn btn-outline-success w-100 btn-action">
+                                <i class="fas fa-clipboard-check me-2"></i>Quality Check
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'dashboards:dashboard_home' %}" class="btn btn-outline-secondary w-100 btn-action">
+                                <i class="fas fa-home me-2"></i>Dashboard Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Messages -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    {% for message in messages %}
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header 
+            {% if message.tags == 'success' %}bg-success text-white
+            {% elif message.tags == 'error' %}bg-danger text-white
+            {% else %}bg-info text-white{% endif %}">
+            <strong class="me-auto">
+                {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle me-1"></i>Success
+                {% elif message.tags == 'error' %}
+                <i class="fas fa-exclamation-triangle me-1"></i>Error
+                {% else %}
+                <i class="fas fa-info-circle me-1"></i>Info
+                {% endif %}
+            </strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            {{ message }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Auto-hide toasts after 5 seconds
+    setTimeout(function() {
+        $('.toast').toast('hide');
+    }, 5000);
+
+    // Add loading state to form submissions
+    $('form').on('submit', function() {
+        $(this).find('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Processing...');
+    });
+
+    // Refresh page every 30 seconds to update status
+    setInterval(function() {
+        // Only refresh if no forms are being submitted
+        if (!$('button[type="submit"]:disabled').length) {
+            location.reload();
+        }
+    }, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,734 @@
+{% extends 'base.html' %}
+
+{% block title %}QA Dashboard - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-clipboard-check text-primary me-2"></i>
+                    Quality Assurance Dashboard
+                </h1>
+                <div class="text-success">
+                    {{ user.get_role_display }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card dashboard-card border-primary bg-primary text-white" style="height: 120px;">
+                <div class="card-body text-center py-2">
+                    <i class="fas fa-file-alt fa-lg text-white mb-1"></i>
+                    <h6 class="card-title mb-1">Total BMRs</h6>
+                    <h4 class="text-white mb-0">{{ total_bmrs }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card dashboard-card border-warning bg-warning text-dark" style="height: 120px;">
+                <div class="card-body text-center py-2">
+                    <i class="fas fa-edit fa-lg text-dark mb-1"></i>
+                    <h6 class="card-title mb-1">Draft BMRs</h6>
+                    <h4 class="text-dark mb-0">{{ draft_bmrs }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card dashboard-card border-info bg-info text-white" style="height: 120px;">
+                <div class="card-body text-center py-2">
+                    <i class="fas fa-paper-plane fa-lg text-white mb-1"></i>
+                    <h6 class="card-title mb-1">Submitted BMRs</h6>
+                    <h4 class="text-white mb-0">{{ submitted_bmrs }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card dashboard-card border-success bg-success text-white" style="height: 120px;">
+                <div class="card-body text-center py-2">
+                    <i class="fas fa-user-check fa-lg text-white mb-1"></i>
+                    <h6 class="card-title mb-1">My BMRs</h6>
+                    <h4 class="text-white mb-0">{{ my_bmrs }}</h4>
+                </div>
+            </div>
+        </div>    <!-- My History Section (moved below cards) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-history"></i> My History</span>
+                </div>
+                <div class="card-body">
+                    <div style="max-height: 180px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Batch</th>
+                                    <th>Phase</th>
+                                </tr>
+                            </thead>
+                            <tbody id="operator-history">
+                                {% for entry in operator_history %}
+                                <tr><td>{{ entry.date }}</td><td>{{ entry.batch }}</td><td>{{ entry.phase }}</td></tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">No history found.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quarantine Sample Processing Section -->
+    {% if pending_quarantine_samples %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-vial me-2"></i>
+                        Quarantine Samples - Pending Processing ({{ pending_quarantine_samples.count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Priority</th>
+                                    <th>Product</th>
+                                    <th>Batch Number</th>
+                                    <th>Sample #</th>
+                                    <th>Requested</th>
+                                    <th>Wait Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sample in pending_quarantine_samples %}
+                                <tr class="{% if sample.is_urgent %}table-warning{% endif %}">
+                                    <td>
+                                        {% if sample.is_urgent %}
+                                            <span class="badge bg-danger">URGENT</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ sample.quarantine_batch.bmr.product.product_name }}</td>
+                                    <td>{{ sample.quarantine_batch.bmr.batch_number }}</td>
+                                    <td>{{ sample.sample_number }}</td>
+                                    <td>{{ sample.request_date|date:"M d, H:i" }}</td>
+                                    <td>{{ sample.wait_time_hours }}h</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm" 
+                                                onclick="processSample('{{ sample.id }}', '{{ sample.quarantine_batch.bmr.batch_number }}', '{{ sample.sample_number }}')">
+                                            <i class="fas fa-flask"></i> Process Sample
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Final QA Pending Section (Ready to Start) -->
+    {% if final_qa_pending %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Final QA Review - Ready to Start ({{ final_qa_pending.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>BMR Number</th>
+                                <th>Product</th>
+                                <th>Batch Size</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for phase in final_qa_pending %}
+                            <tr>
+                                <td><strong class="text-primary">{{ phase.bmr.batch_number }}</strong></td>
+                                <td>{{ phase.bmr.product.product_name }}</td>
+                                <td>{{ phase.bmr.batch_size|floatformat:0 }} {{ phase.bmr.batch_size_unit }}</td>
+                                <td>{{ phase.bmr.created_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-warning">Ready for Final QA</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'bmr:detail' phase.bmr.pk %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View BMR
+                                        </a>
+                                        <button class="btn btn-primary btn-sm" 
+                                                onclick="startQA('{{ phase.id }}', '{{ phase.bmr.batch_number }}')">
+                                            <i class="fas fa-play"></i> Start Review
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- BMR Requests Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-medical me-2"></i>
+                        BMR Requests from production
+                    </h5>
+                    <div>
+                        <a href="{% url 'bmr:bmr_request_list' %}" class="btn btn-sm btn-light">
+                            <i class="fas fa-list me-1"></i> View All Requests
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BMR Request Stats -->
+            <div class="card-body border-bottom p-0">
+                <div class="row g-0">
+                    <div class="col-md-4 border-end">
+                        <div class="p-3 text-center">
+                            <h3 class="text-warning mb-1">
+                                <i class="fas fa-hourglass-half me-2"></i>
+                                {{ bmr_request_counts.pending }}
+                            </h3>
+                            <p class="text-muted mb-0">Pending Requests</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 border-end">
+                        <div class="p-3 text-center">
+                            <h3 class="text-success mb-1">
+                                <i class="fas fa-check-circle me-2"></i>
+                                {{ bmr_request_counts.approved }}
+                            </h3>
+                            <p class="text-muted mb-0">Approved Requests</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 text-center">
+                            <h3 class="text-danger mb-1">
+                                <i class="fas fa-times-circle me-2"></i>
+                                {{ bmr_request_counts.rejected }}
+                            </h3>
+                            <p class="text-muted mb-0">Rejected Requests</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Requests Table -->
+            <div class="card-body">
+                <h6 class="card-subtitle mb-3">Pending BMR Requests</h6>
+                
+                {% if bmr_requests_pending %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Requested By</th>
+                                <th>Required Date</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in bmr_requests_pending %}
+                            <tr>
+                                <td>{{ request.product.product_name }}</td>
+                                <td>{{ request.requested_by.get_full_name }}</td>
+                                <td>{{ request.required_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge {% if request.priority == 'high' %}bg-danger{% elif request.priority == 'medium' %}bg-warning{% else %}bg-info{% endif %}">
+                                        {{ request.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'bmr:bmr_request_detail' request.id %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'bmr:approve_bmr_request' request.id %}" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Approve
+                                        </a>
+                                        <a href="{% url 'bmr:reject_bmr_request' request.id %}" class="btn btn-danger">
+                                            <i class="fas fa-times"></i> Reject
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No pending BMR requests at the moment.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Final QA In Progress Section (Ready to Complete) -->
+{% if final_qa_in_progress %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Final QA Review - In Progress ({{ final_qa_in_progress.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>BMR Number</th>
+                                <th>Product</th>
+                                <th>Batch Size</th>
+                                <th>Started By</th>
+                                <th>Started Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for phase in final_qa_in_progress %}
+                            <tr>
+                                <td><strong class="text-primary">{{ phase.bmr.batch_number }}</strong></td>
+                                <td>{{ phase.bmr.product.product_name }}</td>
+                                <td>{{ phase.bmr.batch_size|floatformat:0 }} {{ phase.bmr.batch_size_unit }}</td>
+                                <td>{{ phase.started_by.get_full_name|default:phase.started_by.username }}</td>
+                                <td>{{ phase.started_date|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-primary">QA Review In Progress</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'bmr:detail' phase.bmr.pk %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View BMR
+                                        </a>
+                                        <button class="btn btn-success btn-sm" 
+                                                onclick="approveQA('{{ phase.id }}', '{{ phase.bmr.batch_number }}')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="rejectQA('{{ phase.id }}', '{{ phase.bmr.batch_number }}')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quarantine Samples Section -->
+{% if quarantine_samples_pending %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-vial me-2"></i>Quarantine Samples Awaiting Processing ({{ quarantine_samples_pending.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Batch Number</th>
+                                <th>Sample #</th>
+                                <th>Requested</th>
+                                <th>Wait Time</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sample in quarantine_samples_pending %}
+                            <tr class="{% if sample.is_urgent %}table-warning{% endif %}">
+                                <td>{{ sample.quarantine_batch.bmr.product.product_name }}</td>
+                                <td><strong class="text-primary">{{ sample.quarantine_batch.bmr.batch_number }}</strong></td>
+                                <td>{{ sample.sample_number }}</td>
+                                <td>{{ sample.request_date|date:"M d, H:i" }}</td>
+                                <td>{{ sample.wait_time_hours }}h</td>
+                                <td>
+                                    {% if sample.is_urgent %}
+                                        <span class="badge bg-danger">URGENT</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Normal</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm"
+                                            onclick="processQuarantineSample('{{ sample.id }}', '{{ sample.quarantine_batch.bmr.batch_number }}', '{{ sample.sample_number }}')">
+                                        <i class="fas fa-flask"></i> Process Sample
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent BMRs and Quick Actions at Bottom -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Recent BMRs
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_bmrs %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Batch Number</th>
+                                <th>Product</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bmr in recent_bmrs %}
+                            <tr>
+                                <td><strong>{{ bmr.batch_number }}</strong></td>
+                                <td>{{ bmr.product.product_name }}</td>
+                                <td>
+                                    <span class="badge bg-{{ bmr.status|yesno:'success,warning,secondary' }}">
+                                        {{ bmr.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ bmr.created_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'bmr:detail' bmr.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No BMRs found</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if bmr_requests_pending %}
+                        <a href="{% url 'bmr:approve_bmr_request' bmr_requests_pending.0.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Approve Request & Create New BMR
+                        </a>
+                    {% else %}
+                        <button type="button" class="btn btn-secondary" disabled data-bs-toggle="tooltip" data-bs-placement="top" title="No pending BMR requests available">
+                            <i class="fas fa-plus me-2"></i>
+                            Create New BMR
+                            <span class="badge bg-warning ms-2">No Requests</span>
+                        </button>
+                    {% endif %}
+                    <a href="{% url 'bmr:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>
+                        View All BMRs ({{ total_bmrs }})
+                    </a>
+                    <div class="mt-2 p-2 bg-light rounded">
+                        <small class="text-muted d-block">Quick Stats:</small>
+                        <div class="row text-center mt-1">
+                            <div class="col-4">
+                                <span class="badge bg-success">{{ approved_bmrs }}</span>
+                                <small class="d-block text-muted">Approved</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-danger">{{ rejected_bmrs }}</span>
+                                <small class="d-block text-muted">Rejected</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge bg-warning text-dark">{{ draft_bmrs }}</span>
+                                <small class="d-block text-muted">Draft</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Detailed Status Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-success">{{ approved_bmrs }}</h4>
+                            <small class="text-muted">Total Approved</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-danger">{{ rejected_bmrs }}</h4>
+                        <small class="text-muted">Total Rejected</small>
+                    </div>
+                </div>
+                <hr class="my-2">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-info">{{ submitted_bmrs }}</h5>
+                        <small class="text-muted">Pending Review</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-warning">{{ my_bmrs }}</h5>
+                        <small class="text-muted">My BMRs</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- QA Action Modal -->
+<div class="modal fade" id="qaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qaModalTitle">Final QA Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="qaForm" method="post" action="{% url 'dashboards:qa_dashboard' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="qaModalBody">
+                        <!-- Dynamic content -->
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="qa_comments">QA Comments:</label>
+                        <textarea class="form-control" id="qa_comments" name="comments" rows="3" required></textarea>
+                        <small class="form-text text-muted">Please provide detailed comments for your decision.</small>
+                    </div>
+                    <input type="hidden" id="qa_phase_id" name="phase_id">
+                    <input type="hidden" id="qa_action" name="action">
+                    <!-- Add a fresh CSRF token for each form submission -->
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="qaSubmitBtn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Function to get CSRF token from cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Function to refresh CSRF token in form
+function refreshCSRFToken() {
+    const csrfToken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInputs = document.querySelectorAll('[name=csrfmiddlewaretoken]');
+    csrfInputs.forEach(input => {
+        input.value = csrfToken;
+    });
+}
+
+function startQA(phaseId, bmrNumber) {
+    refreshCSRFToken(); // Refresh CSRF token before showing modal
+    document.getElementById('qaModalTitle').textContent = 'Start Final QA Review';
+    document.getElementById('qaModalBody').innerHTML = `
+        <p>Start Final QA Review for <strong>BMR ${bmrNumber}</strong>?</p>
+        <p class="text-info"><small>This will begin the quality assurance review process. You can then approve or reject after completing your review.</small></p>
+    `;
+    document.getElementById('qa_phase_id').value = phaseId;
+    document.getElementById('qa_action').value = 'start';
+    document.getElementById('qaSubmitBtn').textContent = 'Start Review';
+    document.getElementById('qaSubmitBtn').className = 'btn btn-primary';
+    
+    // Make comments optional for starting
+    document.getElementById('qa_comments').required = false;
+    document.querySelector('label[for="qa_comments"]').textContent = 'Initial Notes (Optional):';
+    
+    new bootstrap.Modal(document.getElementById('qaModal')).show();
+}
+
+function approveQA(phaseId, bmrNumber) {
+    refreshCSRFToken(); // Refresh CSRF token before showing modal
+    document.getElementById('qaModalTitle').textContent = 'Approve Final QA';
+    document.getElementById('qaModalBody').innerHTML = `
+        <p>Approve Final QA for <strong>BMR ${bmrNumber}</strong>?</p>
+        <p class="text-success"><small>This will complete the Final QA phase and send the batch to Finished Goods Store for storage.</small></p>
+    `;
+    document.getElementById('qa_phase_id').value = phaseId;
+    document.getElementById('qa_action').value = 'approve';
+    document.getElementById('qaSubmitBtn').textContent = 'Approve';
+    document.getElementById('qaSubmitBtn').className = 'btn btn-success';
+    
+    // Make comments required for approval
+    document.getElementById('qa_comments').required = true;
+    document.querySelector('label[for="qa_comments"]').textContent = 'Approval Comments:';
+    
+    new bootstrap.Modal(document.getElementById('qaModal')).show();
+}
+
+function rejectQA(phaseId, bmrNumber) {
+    refreshCSRFToken(); // Refresh CSRF token before showing modal
+    document.getElementById('qaModalTitle').textContent = 'Reject Final QA';
+    document.getElementById('qaModalBody').innerHTML = `
+        <p>Reject Final QA for <strong>BMR ${bmrNumber}</strong>?</p>
+        <p class="text-danger"><small>This will send the batch back to the appropriate packing phase for rework.</small></p>
+        <div class="alert alert-warning mt-2">
+            <strong>Note:</strong> Please provide detailed rejection reasons to help the packing team understand what needs to be corrected.
+        </div>
+    `;
+    document.getElementById('qa_phase_id').value = phaseId;
+    document.getElementById('qa_action').value = 'reject';
+    document.getElementById('qaSubmitBtn').textContent = 'Reject';
+    document.getElementById('qaSubmitBtn').className = 'btn btn-danger';
+    
+    // Make comments required for rejection
+    document.getElementById('qa_comments').required = true;
+    document.querySelector('label[for="qa_comments"]').textContent = 'Rejection Reason (Required):';
+    
+    new bootstrap.Modal(document.getElementById('qaModal')).show();
+}
+
+function processSample(sampleId, bmrNumber, sampleNumber) {
+    if (confirm(`Process sample ${sampleNumber} for BMR ${bmrNumber} and send to QC?`)) {
+        fetch(`/quarantine/qa/process-sample/${sampleId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while processing the sample.');
+        });
+    }
+}
+
+function processQuarantineSample(sampleId, batchNumber, sampleNumber) {
+    if (confirm(`Process quarantine sample ${sampleNumber} for batch ${batchNumber} and send to QC?`)) {
+        fetch(`/quarantine/qa/process-sample/${sampleId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while processing the sample.');
+        });
+    }
+}
+</script>
+{% endblock %}

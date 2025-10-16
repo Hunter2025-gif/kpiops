@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Charts Debug</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="/static/js/chart_data.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Charts Debug</h1>
+    
+    <h2>Product Type Chart</h2>
+    <div class="chart-container">
+        <canvas id="productTypeChart"></canvas>
+    </div>
+    
+    <h2>Phase Status Chart</h2>
+    <div class="chart-container">
+        <canvas id="phaseStatusChart"></canvas>
+    </div>
+    
+    <h2>Weekly Trend Chart</h2>
+    <div class="chart-container">
+        <canvas id="weeklyTrendChart"></canvas>
+    </div>
+    
+    <h2>QC Status Chart</h2>
+    <div class="chart-container">
+        <canvas id="qcStatusChart"></canvas>
+    </div>
+    
+    <script>
+        // Initialize charts when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing charts');
+            
+            // Product Type Chart
+            const productTypeChart = new Chart(
+                document.getElementById('productTypeChart'),
+                {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Tablets', 'Capsules', 'Ointments'],
+                        datasets: [{
+                            data: [productData.tablets, productData.capsules, productData.ointments],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(255, 99, 132, 0.8)',
+                                'rgba(75, 192, 192, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                }
+            );
+            
+            // Phase Status Chart
+            const phaseStatusChart = new Chart(
+                document.getElementById('phaseStatusChart'),
+                {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mixing', 'Drying', 'Granulation', 'Compression', 'Packing'],
+                        datasets: [{
+                            label: 'Completed',
+                            data: [
+                                phaseData.mixing_completed,
+                                phaseData.drying_completed,
+                                phaseData.granulation_completed,
+                                phaseData.compression_completed,
+                                phaseData.packing_completed
+                            ],
+                            backgroundColor: 'rgba(75, 192, 192, 0.8)'
+                        }, {
+                            label: 'In Progress',
+                            data: [
+                                phaseData.mixing_inprogress,
+                                phaseData.drying_inprogress,
+                                phaseData.granulation_inprogress,
+                                phaseData.compression_inprogress,
+                                phaseData.packing_inprogress
+                            ],
+                            backgroundColor: 'rgba(54, 162, 235, 0.8)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                }
+            );
+            
+            // Weekly Trend Chart
+            const weeklyTrendChart = new Chart(
+                document.getElementById('weeklyTrendChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Batches Started',
+                            data: [
+                                weeklyData.started_week1,
+                                weeklyData.started_week2,
+                                weeklyData.started_week3,
+                                weeklyData.started_week4
+                            ],
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            fill: true
+                        }, {
+                            label: 'Batches Completed',
+                            data: [
+                                weeklyData.completed_week1,
+                                weeklyData.completed_week2,
+                                weeklyData.completed_week3,
+                                weeklyData.completed_week4
+                            ],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                }
+            );
+            
+            // QC Status Chart
+            const qcStatusChart = new Chart(
+                document.getElementById('qcStatusChart'),
+                {
+                    type: 'pie',
+                    data: {
+                        labels: ['Passed', 'Failed', 'Pending'],
+                        datasets: [{
+                            data: [qcData.passed, qcData.failed, qcData.pending],
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.8)',
+                                'rgba(255, 99, 132, 0.8)',
+                                'rgba(255, 205, 86, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                }
+            );
+        });
+    </script>
+</body>
+</html>

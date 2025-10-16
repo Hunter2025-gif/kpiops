@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Create BMR - Kampala Pharmaceutical Industries{% endblock %}
+
+{% block header %}Create New BMR{% endblock %}
+
+{% block header_buttons %}
+<a href="{% url 'admin:bmr_bmr_changelist' %}" class="btn btn-secondary">
+    <i class="fas fa-list"></i> View All BMRs
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        {% if approved_request %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-circle"></i> Creating BMR from Approved Request
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Product:</strong> {{ approved_request.product.product_name }}</p>
+                        <p><strong>Requested By:</strong> {{ approved_request.requested_by.get_full_name }}</p>
+                        <p><strong>Request Date:</strong> {{ approved_request.request_date|date:"M d, Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Standard Batch Size:</strong> {{ approved_request.quantity_required }} {{ approved_request.quantity_unit }}</p>
+                        <p><strong>Priority:</strong> {{ approved_request.get_priority_display }}</p>
+                        <p><strong>Reason:</strong> {{ approved_request.reason }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-medical"></i> BMR Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>There were errors with your submission:</strong>
+                    <ul class="mb-0">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>There were errors with your submission:</strong>
+                    <ul class="mb-0">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <form method="post" id="bmrForm">
+                    {% csrf_token %}
+                    
+                    <!-- Product Selection -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">{{ form.product.label }}</label>
+                            {{ form.product }}
+                            <div id="productDetails" class="mt-2 p-3 bg-light rounded" style="display: none;">
+                                <h6>Product Details:</h6>
+                                <div id="productInfo"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Batch Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <span class="text-danger">*</span> {{ form.batch_number.label }}
+                            </label>
+                            {{ form.batch_number }}
+                            <div class="form-text">{{ form.batch_number.help_text }}</div>
+                            {% if form.batch_number.errors %}
+                                <div class="text-danger">{{ form.batch_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <span class="text-danger">*</span> Manufacturing Date
+                            </label>
+                            {{ form.manufacturing_date }}
+                            <div class="form-text">{{ form.manufacturing_date.help_text }}</div>
+                            {% if form.manufacturing_date.errors %}
+                                <div class="text-danger">{{ form.manufacturing_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ form.batch_size.label }}</label>
+                            {{ form.batch_size }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ form.batch_size_unit.label }}</label>
+                            {{ form.batch_size_unit }}
+                        </div>
+                    </div>
+                    
+                    <!-- Dates -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.planned_start_date.label }}</label>
+                            {{ form.planned_start_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.planned_completion_date.label }}</label>
+                            {{ form.planned_completion_date }}
+                        </div>
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.manufacturing_instructions.label }}</label>
+                        {{ form.manufacturing_instructions }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{ form.special_instructions.label }}</label>
+                        {{ form.special_instructions }}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.in_process_controls.label }}</label>
+                            {{ form.in_process_controls }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.quality_checks_required.label }}</label>
+                            {{ form.quality_checks_required }}
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" name="action" value="save_draft" class="btn btn-secondary">
+                            <i class="fas fa-save"></i> Save as Draft
+                        </button>
+                        <button type="submit" name="action" value="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Create BMR
+                            {% if not approved_request %}<small class="ms-2 text-muted">(Requires an approved request)</small>{% endif %}
+                        </button>
+                    </div>
+                </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if existing_approved_requests %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-double"></i> Approved Requests Waiting for BMR Numbers
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for req in existing_approved_requests %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between mb-1">
+                            <h6 class="mb-1">{{ req.product.product_name }}</h6>
+                            <span class="badge bg-success">{{ req.get_priority_display }}</span>
+                        </div>
+                        <p class="mb-1 small">Requested: {{ req.request_date|date:"M d, Y" }}</p>
+                        <p class="mb-1 small">Approved: {{ req.approved_date|date:"M d, Y" }}</p>
+                        <a href="{% url 'bmr:approve_bmr_request' req.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i> Assign BMR Number
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Batch Number Format:</h6>
+                <ul class="small">
+                    <li><strong>Format:</strong> XXXYYYY</li>
+                    <li><strong>Example:</strong> 0012025</li>
+                    <li><strong>XXX:</strong> Sequential batch number (001, 002, etc.)</li>
+                    <li><strong>YYYY:</strong> Year (2025)</li>
+                </ul>
+                
+                <h6 class="mt-3">Steps:</h6>
+                <ol class="small">
+                    <li>Select the product</li>
+                    <li>Enter unique batch number</li>
+                    <li>Fill batch size and dates</li>
+                    <li>Add manufacturing instructions</li>
+                    <li>Submit for regulatory approval</li>
+                </ol>
+                
+                <div class="alert alert-info mt-3">
+                    <small>
+                        <i class="fas fa-lightbulb"></i> 
+                        Product details will auto-populate when you select a product.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Product selection handler
+    $('#id_product').change(function() {
+        const productId = $(this).val();
+        if (productId) {
+            // Show loading
+            $('#productDetails').show();
+            $('#productInfo').html('<i class="fas fa-spinner fa-spin"></i> Loading product details...');
+            
+            // Fetch product details (simulated - you can make an AJAX call here)
+            const productText = $(this).find('option:selected').text();
+            const productInfo = `
+                <div class="row">
+                    <div class="col-6"><strong>Product:</strong></div>
+                    <div class="col-6">${productText}</div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Status:</strong></div>
+                    <div class="col-6"><span class="badge bg-success">Active</span></div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><strong>Type:</strong></div>
+                    <div class="col-6">Details will be loaded from database</div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                $('#productInfo').html(productInfo);
+            }, 500);
+        } else {
+            $('#productDetails').hide();
+        }
+    });
+    
+    // Batch number formatting
+    $('#id_batch_number').on('input', function() {
+        let value = $(this).val().replace(/\D/g, ''); // Remove non-digits
+        if (value.length > 7) {
+            value = value.substring(0, 7);
+        }
+        $(this).val(value);
+        
+        // Visual feedback
+        if (value.length === 7) {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+        } else if (value.length > 0) {
+            $(this).removeClass('is-valid').addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-valid is-invalid');
+        }
+    });
+    
+    // Form validation
+    $('#bmrForm').submit(function(e) {
+        const batchNumber = $('#id_batch_number').val();
+        if (batchNumber.length !== 7) {
+            e.preventDefault();
+            alert('Please enter a valid 7-digit batch number (e.g., 0012025)');
+            $('#id_batch_number').focus();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}
