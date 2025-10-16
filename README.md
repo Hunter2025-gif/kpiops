@@ -8,7 +8,10 @@ A comprehensive pharmaceutical production workflow management system built with 
 - **Role-Based Access Control**: Each user type has a dedicated dashboard
 - **Electronic Batch Records**: Full BMR lifecycle management
 - **Real-Time Production Tracking**: Live monitoring of all production phases
-- **Quality Control Integration**: Built-in QC checkpoints with rollback capability
+- **Integrated Quality Management**: 
+  - Built-in QC checkpoints with rollback capability
+  - Comprehensive quarantine management
+  - QA oversight and electronic approvals
 - **Finished Goods Management**: Complete tracking through to storage
 
 ### Product Types & Workflows
@@ -56,9 +59,21 @@ Final QA → Finished Goods
   - Packaging/Packing
 
 ### Quality Management
-- **QC Team**: Testing and quality verification
-- **QA Review**: Final product approval
-- **Quarantine Management**: Non-conforming products
+- **QC Team**: 
+  - In-process testing and verification
+  - Sample analysis and documentation
+  - Pass/fail determinations
+  - Trend analysis and reporting
+- **QA Team**:
+  - BMR creation and review
+  - Sample collection and handling
+  - Final product approval
+  - Quality system oversight
+- **Quarantine Management**:
+  - Non-conforming product isolation
+  - Sample request processing
+  - QA/QC coordination
+  - Release authorization
 
 ## 🔄 Workflow Features
 
@@ -73,12 +88,30 @@ Final QA → Finished Goods
 - QC checkpoints with pass/fail routing
 - Equipment status monitoring
 - Breakdown tracking
+- Production-initiated QC requests
+- Real-time quality status updates
 
-### Quality Control
-- Integrated testing workflows
-- Automatic phase rollback on failures
-- Batch quarantine capability
-- COA generation
+### Quality Control & Quarantine Management
+- Critical QC Checkpoints:
+  - Post-mixing QC testing
+  - Post-blending QC verification
+  - Post-compression QC analysis
+- Quarantine Process Flow:
+  - Batch quarantine initiation
+  - Sample request management
+  - QA sampling workflow
+  - QC testing and verification
+  - Release/reject decisions
+- Quality Metrics:
+  - Sample turnaround times
+  - Test pass/fail rates
+  - Quarantine duration tracking
+  - QA/QC performance metrics
+- Automated Features:
+  - Phase rollback on failures
+  - Electronic COA generation
+  - Sample tracking system
+  - Audit trail maintenance
 
 ## 🔍 Dashboard Features
 
@@ -86,7 +119,11 @@ Final QA → Finished Goods
 - Real-time batch status
 - Phase completion metrics
 - Equipment utilization
-- Quality metrics
+- Quality Monitoring:
+  - Active quarantine batches
+  - Pending QA/QC samples
+  - Test result status
+  - Release/reject rates
 
 ### Analytics
 - Production efficiency metrics
